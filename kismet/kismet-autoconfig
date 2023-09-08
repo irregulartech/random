@@ -107,20 +107,6 @@ if [ -n "${rtl_num_devices}" ]; then
     rtl_device=$((i-1))
     if [ "${rtl_skip_zero}" = "true" ]; then
       case ${rtl_device} in
-        0) freq="315" ;;
-        1) freq="433.92" ;;
-        2) freq="915" ;;
-        3) freq="345" ;;
-        4) freq="868.3" ;;
-        5) freq="adsb" ;;
-        6) freq="amr" ;;
-        *)
-          printf "You have more rtlsdrs than we know what to do with.\n"
-          printf "# Wasting rtlsdr-%s\n" "${rtl_device}" >> "${kismet_site}"
-          ;;
-      esac
-    else
-      case ${rtl_device} in
         1) freq="315" ;;
         2) freq="433.92" ;;
         3) freq="915" ;;
@@ -128,6 +114,20 @@ if [ -n "${rtl_num_devices}" ]; then
         5) freq="868.3" ;;
         6) freq="adsb" ;;
         7) freq="amr" ;;
+        *)
+          printf "You have more rtlsdrs than we know what to do with.\n"
+          printf "# Wasting rtlsdr-%s\n" "${rtl_device}" >> "${kismet_site}"
+          ;;
+      esac
+    else
+      case ${rtl_device} in
+        0) freq="315" ;;
+        1) freq="433.92" ;;
+        2) freq="915" ;;
+        3) freq="345" ;;
+        4) freq="868.3" ;;
+        5) freq="adsb" ;;
+        6) freq="amr" ;;
         *)
           printf "You have more rtlsdrs than we know what to do with.\n"
           printf "# Wasting rtlsdr-%s\n" "${rtl_device}" >> "${kismet_site}"
