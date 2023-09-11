@@ -1,5 +1,5 @@
 #!/bin/sh
-VERS="v0.5"
+VERS="v0.6"
 
 blue_hydra="false"
 rtl_skip_zero="false"
@@ -142,9 +142,9 @@ if [ -n "${rtl_num_devices}" ]; then
     fi
     printf "#rtl-sdr %s\n" "${rtl_device}" >> "${kismet_site}"
     if [ "${freq}" = "adsb" ]; then
-      printf "source=rtladsb-0:name=rtladsb,type=rtladsb\n" >> "${kismet_site}"
+      printf "source=rtladsb-%s:name=rtladsb,type=rtladsb\n" "${rtl_device}" >> "${kismet_site}"
     elif [ "${freq}" = "amr" ]; then
-      printf "source=rtlamr-0:name=rtlamr,type=rtlamr\n" >> "${kismet_site}"
+      printf "source=rtlamr-%s:name=rtlamr,type=rtlamr\n" "${rtl_device}" >> "${kismet_site}"
     else
       printf "source=rtl433-%s:channel=%sMHz,name=rtl%s,type=rtl433\n" "${rtl_device}" "${freq}" "${freq}" >> "${kismet_site}"
     fi
