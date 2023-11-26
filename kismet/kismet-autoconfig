@@ -48,6 +48,16 @@ for nxp in $(ls /dev/nxp_kw41z* 2> /dev/null); do
   printf "source=nxp_kw41z:device=%s,type=nxp_kw41z,phy=all\n" "${nxp}" >> "${kismet_site}"
 done
 
+#for nrf52840 in $(ls /dev/nxp_kw41z* 2> /dev/null); do
+#  printf "#NXP_KW1Z btle and zigbee sniffer\n" >> "${kismet_site}"
+#  printf "source=nxp_kw41z:device=%s,type=nxp_kw41z,phy=all\n" "${nxp}" >> "${kismet_site}"
+#done
+
+#for nrf51820 in $(ls /dev/nxp_kw41z* 2> /dev/null); do
+#  printf "#NXP_KW1Z btle and zigbee sniffer\n" >> "${kismet_site}"
+#  printf "source=nxp_kw41z:device=%s,type=nxp_kw41z,phy=all\n" "${nxp}" >> "${kismet_site}"
+#done
+
 bthci="$(hciconfig -a | awk -F: '/hci/{print $1}')"
 if [ -n "${bthci}" ]; then
   printf "#bluetooth classic *active* discovery\n" >> "${kismet_site}"
@@ -72,6 +82,7 @@ if [ "${uberteeth}" -gt "0" ]; then
   done
 fi
 
+#XX Fix for better grep
 mousejack="$(lsusb | grep Nordic | awk '{print $2"-"$4}')"
 if [ -n "${mousejack}" ]; then
   printf "#mousejack\n" >> "${kismet_site}"
