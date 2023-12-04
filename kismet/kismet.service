@@ -1,0 +1,17 @@
+[Unit]
+Description=Kismet
+ConditionPathExists=/usr/local/bin/kismet
+After=network.target auditd.service
+
+[Service]
+User=root
+Group=root
+Type=simple
+ExecStartPre=/usr/local/sbin/kismet-autoconfig /etc/kismet/kismet_site.conf
+ExecStart=/usr/local/bin/kismet --no-ncurses-wrapper
+KillMode=process
+TimeoutSec=0
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
