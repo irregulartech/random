@@ -11,7 +11,7 @@ log_location=""
 truncate_data="false"
 
 #argparser
-while [ -n "${1}" ]; do
+while [ -n "${1:-}" ]; do
   case ${1} in 
     --blue_hydra)
       blue_hydra="true"
@@ -44,7 +44,7 @@ while [ -n "${1}" ]; do
   esac
 done
 
-if [ -n "${1}" ]; then
+if [ -n "${1:-}" ]; then
   if ! touch "${1}" || [ ! -w "${1}" ]; then
     printf "Unable to write to config %s\n" "${1}" >&2
     exit 1
@@ -200,6 +200,17 @@ if [ -n "${rtl_num_devices}" ]; then
     fi
   done
 fi
+
+# Hak5 Coconut
+coconuts="$(kismet_cap_hak5_wifi_coconut --list 2>&1 | awk '/^ *coconut/ {print $1}')"
+if [ -n "${coconuts}" ]; then
+  printf "# Hak5 Wifi Coconut\n" >> "${kismet_site}"
+  for coconut in ${coconuts}; do
+    printf "source=%s\n" "${coconut}" >> "${kismet_site}"
+  done
+fi
+
+# XXX: the coconut detection needs to remove things from the wlan detection, but I don't know how
 
 wlan_devices="$(airmon-ng | grep --color=never phy | awk '{print $2}')"
 if [ -n "${wlan_devices:-}" ]; then
