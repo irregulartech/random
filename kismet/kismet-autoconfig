@@ -202,8 +202,10 @@ if [ -n "${rtl_num_devices}" ]; then
 fi
 
 # Hak5 Coconut
+coconut_found="0"
 coconuts="$(kismet_cap_hak5_wifi_coconut --list 2>&1 | awk '/^ *coconut/ {print $1}')"
 if [ -n "${coconuts}" ]; then
+  coconut_found="1"
   printf "# Hak5 Wifi Coconut\n" >> "${kismet_site}"
   for coconut in ${coconuts}; do
     printf "source=%s\n" "${coconut}" >> "${kismet_site}"
@@ -217,28 +219,33 @@ if [ -n "${wlan_devices:-}" ]; then
   for wlan in ${wlan_devices}; do
     if [ "${trigger_lar}" = "true" ]; then
       if [ -r "/sys/class/net/${wlan}/device/uevent" ]; then
-        DRIVER="$(awk -F'=' '$1 == "DRIVER" {print $2}' "/sys/class/net/${1}/device/uevent")"
-        if [ -n "${DRIVER:-}" ] && [ "${DRIVER}" = "iwlwifi" ]; then
-          #This isn't as robust as airmon-ng but I don't think I care since it works for iwlwifi
-          if [ -r "/sys/class/net/${wlan}/phy80211/name" ]; then
-            PHYDEV="$(cat "/sys/class/net/${wlan}/phy80211/name")"
-            if [ -n "${PHYDEV:-}" ]; then
-              if iw phy "${PHYDEV}" info | grep -q '7115 MHz .* (disabled)' > /dev/null 2>&1 ; then
-                for vif in /sys/class/ieee80211/"${PHYDEV}"/device/net/*; do
-                  # Checking for managed/client mode
-                  if [ "$(cat "${vif}/type")" = "1" ]; then
-                    was_down="0"
-                    if ! ip link show "${vif}" | grep -q 'UP' > /dev/null 2>&1 ; then
-                      ip link set "${vif}" up >&2
-                      was_down="1"
+        DRIVER="$(awk -F'=' '$1 == "DRIVER" {print $2}' "/sys/class/net/${wlan}/device/uevent")"
+        if [ -n "${DRIVER:-}" ]; then
+          if [ "${DRIVER}" = "rt2800usb" ] && [ "${coconut_found}" = "1" ]; then
+            printf "Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n" "${wlan}" >&2
+            continue
+          elif [ "${DRIVER}" = "iwlwifi" ]; then
+            #This isn't as robust as airmon-ng but I don't think I care since it works for iwlwifi
+            if [ -r "/sys/class/net/${wlan}/phy80211/name" ]; then
+              PHYDEV="$(cat "/sys/class/net/${wlan}/phy80211/name")"
+              if [ -n "${PHYDEV:-}" ]; then
+                if iw phy "${PHYDEV}" info | grep -q '7115 MHz .* (disabled)' > /dev/null 2>&1 ; then
+                  for vif in /sys/class/ieee80211/"${PHYDEV}"/device/net/*; do
+                    # Checking for managed/client mode
+                    if [ "$(cat "${vif}/type")" = "1" ]; then
+                      was_down="0"
+                      if ! ip link show "${vif}" | grep -q 'UP' > /dev/null 2>&1 ; then
+                        ip link set "${vif}" up >&2
+                        was_down="1"
+                      fi
+                      iw "${vif}" scan > /dev/null 2>&1
+                      sleep 1
+                      if [ "${was_down}" = "1" ]; then
+                        ip list set "${vif}" down >&2
+                      fi
                     fi
-                    iw "${vif}" scan > /dev/null 2>&1
-                    sleep 1
-                    if [ "${was_down}" = "1" ]; then
-                      ip list set "${vif}" down >&2
-                    fi
-                  fi
-                done
+                  done
+                fi
               fi
             fi
           fi
