@@ -232,7 +232,7 @@ if [ -n "${wlan_devices:-}" ]; then
                 # If channel 5955 isn't enabled then we know we need to scan
                 # Channel 5955 was chosen because most countries allow 5945 and higher
                 # https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git/tree/db.txt
-                if iw phy "${PHYDEV}" info | grep -q '5955 MHz .* (disabled)' > /dev/null 2>&1 ; then
+                if iw phy "${PHYDEV}" channels | grep -q '5955 MHz .* (disabled)' > /dev/null 2>&1 ; then
                   for vif in /sys/class/ieee80211/"${PHYDEV}"/device/net/*; do
                     # Checking for managed/client mode
                     if [ "$(cat "${vif}/type")" = "1" ]; then
