@@ -114,7 +114,7 @@ if [ -x "$(command -v ubertooth-util)" ]; then
     done
   fi
 else
-  printf "Ubertooth detection unavailable, ubertooth-util.\n" >&2
+  printf "Ubertooth detection unavailable, ubertooth-util not installed.\n" >&2
 fi
 
 #Nordic Semiconductor ASA Research Firmware
