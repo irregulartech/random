@@ -35,6 +35,11 @@ if [ ! -x "$(command -v ss 2>&1)" ]; then
   printf 'this tool is typically available in the "ss" package\n' >&2
   exit 1
 fi
+if [ ! -x "$(command -v jq 2>&1)" ]; then
+  printf 'jq is required, please install it\n' >&2
+  printf 'this tool is typically available in the "jq" package\n' >&2
+  exit 1
+fi
 # maybe add support for ncat from nmap?
 if [ ! -x "$(command -v nc 2>&1)" ]; then
   printf 'Some kind of netcat is required as "nc", please install it\n' >&2
