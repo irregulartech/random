@@ -40,6 +40,11 @@ if [ ! -x "$(command -v jq 2>&1)" ]; then
   printf 'this tool is typically available in the "jq" package\n' >&2
   exit 1
 fi
+if [ ! -x "$(command -v pgrep 2>&1)" ]; then
+  printf 'pgrep is required, please install it\n' >&2
+  printf 'this tool is typically available in the "procps" package\n' >&2
+  exit 1
+fi
 # maybe add support for ncat from nmap?
 if [ ! -x "$(command -v nc 2>&1)" ]; then
   printf 'Some kind of netcat is required as "nc", please install it\n' >&2
@@ -493,12 +498,24 @@ detect_gps() {
         esac
       done
       case "${gps_lock}" in
-        # pgrep -a gpsd | grep -q -- ' -n '
-        0) printf 'GPS lock is unknown, are you sure your gps works?\n' ;;
-        1) printf 'GPS has no lock, consider adding "-n" to GPSD_OPTIONS\n' ;;
-        2) printf 'Best gps lock is 2d, consider adding "-n" to GPSD_OPTIONS\n' ;;
-        3) true ;;
-        *) true ;;
+        0)
+          printf 'GPS lock unknown, are you sure your gps works?\n'
+          if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
+            printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
+          fi
+          ;;
+        1)
+          printf 'GPS has no lock.\n'
+          if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
+            printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
+          fi
+          ;;
+        2)
+          printf 'Best gps lock is 2d.\n'
+          if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
+            printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
+          fi
+          ;;
       esac
       printf 'gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
     else
