@@ -481,18 +481,20 @@ detect_linuxwifi() {
   fi
   printf '\n## Wifi\n' >> "${kismet_site}"
   for wlan in ${wlan_devices}; do
-      if [ -r "/sys/class/net/${wlan}/device/uevent" ]; then
-        DRIVER="$(awk -F'=' '$1 == "DRIVER" {print $2}' "/sys/class/net/${wlan}/device/uevent")"
-        if [ -n "${DRIVER:-}" ]; then
-          if [ "${DRIVER}" = "rt2800usb" ] && [ "${coconut_found}" = "1" ]; then
-            printf 'Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >&2
-            printf '# Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >> "${kismet_site}"
-            continue
-          elif [ "${DRIVER}" = "iwlwifi" ]; then
-            handle_lar "${wlan}"
-          fi
+    # this interates over all the vif's passed, even if there are multiple vifs per phy
+    # kismet handles it fine, but that's yucky
+    if [ -r "/sys/class/net/${wlan}/device/uevent" ]; then
+      DRIVER="$(awk -F'=' '$1 == "DRIVER" {print $2}' "/sys/class/net/${wlan}/device/uevent")"
+      if [ -n "${DRIVER:-}" ]; then
+        if [ "${DRIVER}" = "rt2800usb" ] && [ "${coconut_found}" = "1" ]; then
+          printf 'Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >&2
+          printf '# Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >> "${kismet_site}"
+          continue
+        elif [ "${DRIVER}" = "iwlwifi" ]; then
+          handle_lar "${wlan}"
         fi
       fi
+    fi
     if [ "${truncate_data}" = "false" ]; then
       printf 'source=%s:default_ht20=true,type=linuxwifi\n' "${wlan}" >> "${kismet_site}"
     else
