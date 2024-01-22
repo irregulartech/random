@@ -418,7 +418,7 @@ handle_lar() {
   if [ "${trigger_lar}" != "true" ]; then
     return 0
   fi
-  if [ -z "${1:-}" ] then
+  if [ -z "${1:-}" ]; then
     printf 'Calling handle_lar without a wifi interface is not allowed.\n'
     exit 1
   fi
