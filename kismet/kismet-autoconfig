@@ -17,7 +17,7 @@ elif [ -z "${USERID}" ]; then
 	printf 'Unable to determine user id, permission errors may occur.\n'
 fi
 
-VERS="v1.2"
+VERS="v1.3"
 
 blue_hydra="false"
 rtl_skip_zero="false"
@@ -500,23 +500,17 @@ detect_gps() {
       case "${gps_lock}" in
         0)
           printf 'GPS lock unknown, are you sure your gps works?\n'
-          if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
-            printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
-          fi
           ;;
         1)
           printf 'GPS has no lock.\n'
-          if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
-            printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
-          fi
           ;;
         2)
           printf 'Best gps lock is 2d.\n'
-          if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
-            printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
-          fi
           ;;
       esac
+      if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
+        printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
+      fi
       printf 'gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
     else
       printf 'GPSD is running but no devices are configured, please configure gpsd to use your gps if you want location information.\n' >&2
