@@ -419,7 +419,7 @@ handle_lar() {
     return 0
   fi
   if [ -z "${1:-}" ]; then
-    printf 'Calling handle_lar without a wifi interface is not allowed.\n'
+    printf 'Calling handle_lar without a wifi interface is not allowed.\n' >&2
     exit 1
   fi
   # This isn't as robust as airmon-ng but I don't think I care since it works for iwlwifi
@@ -441,8 +441,8 @@ handle_lar() {
         done
         [ "${ZSH_NAME:-}" = "zsh" ] && setopt nomatch
         if [ -z "${vif_name:-}" ]; then
-          printf 'Your iwlwifi device %s needs LAR set, but no managed interface is available to do that.\n' "${1}"
-          printf 'Please run "airmon-ng stop %s" or create a managed interface manually.\n' "${1}"
+          printf 'Your iwlwifi device %s needs LAR set, but no managed interface is available to do that.\n' "${1}" >&2
+          printf 'Please run "airmon-ng stop %s" or create a managed interface manually.\n' "${1}" >&2
           exit 1
         fi
         was_down="0"
@@ -451,6 +451,7 @@ handle_lar() {
           was_down="1"
         fi
         iw "${vif_name}" scan > /dev/null 2>&1
+        printf 'LAR set for %s\n' "${vif_name}" >&2
         sleep 1
         if [ "${was_down}" = "1" ]; then
           ip link set "${vif_name}" down >&2
