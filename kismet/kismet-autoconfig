@@ -17,7 +17,7 @@ elif [ -z "${USERID}" ]; then
 	printf 'Unable to determine user id, permission errors may occur.\n'
 fi
 
-VERS="v1.3"
+VERS="v1.3.1"
 
 blue_hydra="false"
 rtl_skip_zero="false"
@@ -142,10 +142,10 @@ detect_nxp() {
   done
   [ "${ZSH_NAME:-}" = "zsh" ] && setopt nomatch
   if [ "${nxp_usb}" != "${nxp_serial}" ]; then
-    printf 'Detected %s nxp_kw1z but found serial interfaces for %s.\n' "${nxp_usb}" "${nxp_serial}"
+    printf 'Detected %s nxp_kw1z but found serial interfaces for %s.\n' "${nxp_usb}" "${nxp_serial}" >&2
     all_nxp_accounted="1"
     if [ "${nxp_serial}" = 0 ]; then
-      printf 'Did you forget to install kismet/packaging/udev/99-kismet-nxp-kw41z.rules?\n'
+      printf 'Did you forget to install kismet/packaging/udev/99-kismet-nxp-kw41z.rules?\n' >&2
     fi
   fi
   return "${all_nxp_accounted}"
@@ -188,12 +188,12 @@ detect_nordic() {
         : $(( nrf522a_usb += 1 ))
         ;;
       7777)
-        printf 'Detected stock Crazyradio PA dongle, did you forget to flash the rfstorm firmware?\n'
-        printf 'Information available here: https://github.com/BastilleResearch/nrf-research-firmware\n'
+        printf 'Detected stock Crazyradio PA dongle, did you forget to flash the rfstorm firmware?\n' >&2
+        printf 'Information available here: https://github.com/BastilleResearch/nrf-research-firmware\n' >&2
         all_nrf_accounted="1"
         ;;
       *)
-        printf 'Detected unsupported nrf device %s:%s, did you forget to flash the correct firmware?\n' "${VID}" "${PID}"
+        printf 'Detected unsupported nrf device %s:%s, did you forget to flash the correct firmware?\n' "${VID}" "${PID}" >&2
         all_nrf_accounted="1"
         ;;
     esac
