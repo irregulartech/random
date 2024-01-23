@@ -17,7 +17,7 @@ elif [ -z "${USERID}" ]; then
 	printf 'Unable to determine user id, permission errors may occur.\n'
 fi
 
-VERS="v1.3.1"
+VERS="v1.4"
 
 blue_hydra="false"
 rtl_skip_zero="false"
@@ -308,6 +308,13 @@ detect_ubertooth() {
           fi
           if printf '%s' "${ubertooth_rx_stderr}" | grep -q 'Please upgrade to latest released firmware'; then
             printf 'Ubertooth %s detected but requires a firmware upgrade to work.\n' "${ubertooth_device}" >&2
+            if [ -x "$(command -v ubertooth-dfu)" ]; then
+              if [ -r '/usr/share/ubertooth/firmware/bluetooth_rxtx.dfu' ]; then
+                printf 'You can upgrade it with "ubertooth-dfu -d /usr/share/ubertooth/firmware/bluetooth_rxtx.dfu -r"\n' >&2
+              elif [ -r '/usr/share/ubertooth/bluetooth_rxtx.dfu' ]; then
+                printf 'You can upgrade it with "ubertooth-dfu -d /usr/share/ubertooth/bluetooth_rxtx.dfu -r"\n' >&2
+              fi
+            fi
             printf '# ubertooth-%s skipped due to required firmware upgrade\n' "${ubertooth_device}" >> "${kismet_site}"
             printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
             ubertooth_errors="1"
