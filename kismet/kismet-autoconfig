@@ -23,6 +23,7 @@ blue_hydra="false"
 rtl_skip_zero="false"
 trigger_lar="true"
 log_location=""
+wifi_backhaul=""
 truncate_data="false"
 
 if [ ! -x "$(command -v airmon-ng 2>&1)" ]; then
@@ -70,6 +71,10 @@ while [ -n "${1:-}" ]; do
       ;;
     --log-location)
       shift
+      if [ -z "${1:-}" ]; then
+        printf -- '--log-location requires a path as the next param\n'
+        exit 1
+      fi
       log_location="${1}"
       shift
       ;;
@@ -83,6 +88,15 @@ while [ -n "${1:-}" ]; do
       ;;
     --truncate-data)
       truncate_data="true"
+      shift
+      ;;
+    --wifi-backhaul)
+      shift
+      if [ -z "${1:-}" ]; then
+        printf -- '--wifi-backhaul requires an interface name as the next param\n'
+        exit 1
+      fi
+      wifi_backhaul="${1}"
       shift
       ;;
     --)
@@ -495,6 +509,13 @@ detect_linuxwifi() {
   fi
   printf '\n## Wifi\n' >> "${kismet_site}"
   for wlan in ${wlan_devices}; do
+    #check off phys and only do each one once, picking interfaces already in monitor mode if available
+    #PHYDEV="$(cat "/sys/class/net/${wlan}/phy80211/name")"
+    if [ -n "${wifi_backhaul:-}" ]; then
+      printf 'Ignoring device %s because it is being used as wifi backhaul\n' "${wlan}" >&2
+      printf '# Ignoring device %s because it is being used as wifi backhaul\n' "${wlan}" >> "${kismet_site}"
+      continue
+    fi
     # this interates over all the vif's passed, even if there are multiple vifs per phy
     # kismet handles it fine, but that's yucky
     if [ -r "/sys/class/net/${wlan}/device/uevent" ]; then
