@@ -17,7 +17,7 @@ elif [ -z "${USERID}" ]; then
 	printf 'Unable to determine user id, permission errors may occur.\n'
 fi
 
-VERS="v1.4"
+VERS="v1.5"
 
 blue_hydra="false"
 rtl_skip_zero="false"
@@ -470,18 +470,24 @@ handle_lar() {
 }
 
 detect_linuxwifi() {
-  # Hak5 Coconut
-  coconut_found="0"
-  coconuts="$(kismet_cap_hak5_wifi_coconut --list 2>&1 | awk '/^ *coconut/ {print $1}')"
-  if [ -n "${coconuts}" ]; then
-    coconut_found="1"
-    printf '\n## Hak5 Wifi Coconut\n' >> "${kismet_site}"
-    for coconut in ${coconuts}; do
-      printf 'source=%s\n' "${coconut}" >> "${kismet_site}"
-    done
-  fi
-
   # XXX: the coconut detection needs to remove things from the wlan detection, and it's a little dumb about it
+  coconut_found='0'
+  if [ "$(lsusb -d '148f:5370' | wc -l)" -gt 8 ]; then
+    coconut_likely='1'
+  else
+    coconut_likely='0'
+  fi
+  if [ "${coconut_likely}" = '1' ]; then
+    # Hak5 Coconut
+    coconuts="$(kismet_cap_hak5_wifi_coconut --list 2>&1 | awk '/^ *coconut/ {print $1}')"
+    if [ -n "${coconuts}" ]; then
+      coconut_found="1"
+      printf '\n## Hak5 Wifi Coconut\n' >> "${kismet_site}"
+      for coconut in ${coconuts}; do
+        printf 'source=%s:type=hak5wificoconut\n' "${coconut}" >> "${kismet_site}"
+      done
+    fi
+  fi
 
   wlan_devices="$(airmon-ng | grep --color=never phy | awk '{print $2}')"
   if [ -z "${wlan_devices:-}" ]; then
@@ -494,10 +500,12 @@ detect_linuxwifi() {
     if [ -r "/sys/class/net/${wlan}/device/uevent" ]; then
       DRIVER="$(awk -F'=' '$1 == "DRIVER" {print $2}' "/sys/class/net/${wlan}/device/uevent")"
       if [ -n "${DRIVER:-}" ]; then
-        if [ "${DRIVER}" = "rt2800usb" ] && [ "${coconut_found}" = "1" ]; then
-          printf 'Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >&2
-          printf '# Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >> "${kismet_site}"
-          continue
+        if [ "${DRIVER}" = "rt2800usb" ]; then
+          if [ "${coconut_found}" = "1" ]; then
+            printf 'Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >&2
+            printf '# Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >> "${kismet_site}"
+            continue
+          fi
         elif [ "${DRIVER}" = "iwlwifi" ]; then
           handle_lar "${wlan}"
         fi
