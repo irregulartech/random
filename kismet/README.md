@@ -5,7 +5,7 @@ I will happily accept bug reports and pull requests for more hardware that is su
 I have included an example kismet.service file.  The purpose of this file is to install in /etc/systemd/system/ and use to run kismet.  This modified version is the same as the upstream kismet version except it runs /usr/local/sbin/kismet-autodetect first to generate a config.  Don't forget to actually put kismet-autodetect in /usr/local/sbin if you use this service file.
 
 Currently available flags:
-    `--blue_hydra`
+    `--bluehydra`
         Skip first detected hci0 and ubertooth devices, assuming blue_hydra will be using them instead of kismet
     `--log-location <some_location>`
         By default kismet logs different places on different systems, depending on how it was installed.  If a specific location is desired, kismet-autoconfig can set the location for you as well as check permissions (and existance) of the target.

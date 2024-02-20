@@ -65,7 +65,7 @@ fi
 #argparser
 while [ -n "${1:-}" ]; do
   case ${1} in
-    --blue_hydra)
+    --bluehydra)
       blue_hydra="true"
       shift
       ;;
@@ -314,13 +314,21 @@ detect_ubertooth() {
         printf 'source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
       else
         if [ -n "${ubertooth_rx_stderr}" ]; then
-          if printf '%s' "${ubertooth_rx_stderr}" | grep -q 'Access denied'; then
+          if printf '%s' "${ubertooth_rx_stderr}" | grep -q 'usb_claim_interface error -6'; then
+            printf 'Ubertooth %s detected but it appears to already be in use.\n' "${ubertooth_device}" >&2
+            if [ "${ubertooth_device}" = "1" ] && [ "${blue_hydra}" = "false" ]; then
+              printf 'Did you mean to pass --bluehydra?' >&2
+              printf '# ubertooth-%s in use, did you mean to pass --bluehydra?\n' "${ubertooth_device}" >> "${kismet_site}"
+            fi
+            printf '# ubertooth-%s skipped because it is already in use\n' "${ubertooth_device}" >> "${kismet_site}"
+            printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+            ubertooth_errors="1"
+          elif printf '%s' "${ubertooth_rx_stderr}" | grep -q 'Access denied'; then
             printf 'Ubertooth detected but user %s does not have access to ubertooth %s hardware\n' "$(id -un)" "${ubertooth_device}" >&2
             printf '# ubertooth-%s skipped due to permission error\n' "${ubertooth_device}" >> "${kismet_site}"
             printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
             ubertooth_errors="1"
-          fi
-          if printf '%s' "${ubertooth_rx_stderr}" | grep -q 'Please upgrade to latest released firmware'; then
+          elif printf '%s' "${ubertooth_rx_stderr}" | grep -q 'Please upgrade to latest released firmware'; then
             printf 'Ubertooth %s detected but requires a firmware upgrade to work.\n' "${ubertooth_device}" >&2
             if [ -x "$(command -v ubertooth-dfu)" ]; then
               if [ -r '/usr/share/ubertooth/firmware/bluetooth_rxtx.dfu' ]; then
@@ -330,6 +338,12 @@ detect_ubertooth() {
               fi
             fi
             printf '# ubertooth-%s skipped due to required firmware upgrade\n' "${ubertooth_device}" >> "${kismet_site}"
+            printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+            ubertooth_errors="1"
+          else
+            printf 'Ubertooth %s detected but provided an unknown error:\n' "${ubertooth_device}" >&2
+            printf '%s' "${ubertooth_rx_stderr}" >&2
+            printf '# ubertooth-%s skipped due to unknow error\n' "${ubertooth_device}" >> "${kismet_site}"
             printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
             ubertooth_errors="1"
           fi
