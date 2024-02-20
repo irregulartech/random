@@ -150,7 +150,7 @@ detect_nxp() {
     if [ "${nxp}" = "/dev/nxp_kw41z*" ]; then
       continue
     fi
-    printf '\n## NXP_KW1Z btle and zigbee sniffer\n' >> "${kismet_site}"
+    printf '\n## NXP_KW1Z ble and zigbee sniffer\n' >> "${kismet_site}"
     printf 'source=nxp_kw41z:device=%s,type=nxp_kw41z,phy=all\n' "${nxp}" >> "${kismet_site}"
     : $(( nxp_serial += 1 ))
   done
@@ -301,7 +301,7 @@ detect_ubertooth() {
   uberteeth="$(ubertooth-util -N 2>/dev/null)"
   if [ "${uberteeth}" -gt "0" ]; then
     ubertooth_errors="0"
-    printf '\n## btle passive discovery using ubertooth\n' >> "${kismet_site}"
+    printf '\n## ble passive discovery using ubertooth\n' >> "${kismet_site}"
     for i in $(seq 1 "${uberteeth}"); do
       ubertooth_device=$((i-1))
       if [ "${ubertooth_device}" = "1" ] && [ "${blue_hydra}" = "true" ]; then
@@ -381,7 +381,7 @@ for device in $(lsusb -d '0451:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | s
     16b3)
       #Texas Instruments, Inc. CC2540 USB Dongle
       if [ "${ti16b3_first}" = "1" ]; then
-        printf '\n## ticc2540 btle\n' >> "${kismet_site}"
+        printf '\n## ticc2540 ble\n' >> "${kismet_site}"
         ti16b3_first="0"
       fi
       printf 'source=ticc2540-%s:type=ticc2540\n' "${BUS}" >> "${kismet_site}"
