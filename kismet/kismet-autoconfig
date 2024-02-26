@@ -165,6 +165,17 @@ detect_nxp() {
   return "${all_nxp_accounted}"
 }
 
+vid_pid_to_dev(){
+  if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
+    printf 'vid_pid_to_dev requires vid as param one and pid as param two\n'
+    exit 1
+  fi
+  find $(grep -l "PRODUCT=${1}/${2}" /sys/bus/usb/devices/[0-9]*:*/uevent | sed 's,uevent$,,') \
+    /dev/null -name dev -o -name dev_id |
+    sed 's,[^/]*$,uevent,' |
+    xargs sed -n -e s,DEVNAME=,/dev/,p
+}
+
 detect_nordic() {
   all_nrf_accounted="0"
   mousejack_first="1"
@@ -221,10 +232,7 @@ detect_nordic() {
 
   nrf51822_first="1"
   [ "${ZSH_NAME:-}" = "zsh" ] && unsetopt nomatch
-  for nrf51822 in /dev/nrf51822*; do
-    if [ "${nrf51822}" = "/dev/nrf51822*" ]; then
-      continue
-    fi
+  for nrf51822 in $(vid_pid_to_dev 1915 522a); do
     if [ "${nrf51822_first}" = "1" ]; then
       printf '\n## nrf51822 ble sniffer\n' >> "${kismet_site}"
       nrf51822_first="0"
@@ -237,16 +245,17 @@ detect_nordic() {
     printf 'Detected %s nrf51822 but found serial interfaces for %s.\n' "${nrf522a_usb}" "${nrf522a_serial}"
     all_nrf_accounted="1"
     if [ "${nrf522a_serial}" = 0 ]; then
-      printf 'Did you forget to install kismet/packaging/udev/99-kismet-nrf51822.rules?\n'
+      if lsmod | grep -q 'cdc_acm' > /dev/null 2>&1; then
+        true
+      else
+        printf 'Do you need to install kernel module cdc_acm?\n'
+      fi
     fi
   fi
 
   nrf52840_first="1"
   [ "${ZSH_NAME:-}" = "zsh" ] && unsetopt nomatch
-  for nrf52840 in /dev/nrf52840*; do
-    if [ "${nrf52840}" = "/dev/nrf52840*" ]; then
-      continue
-    fi
+  for nrf52840 in $(vid_pid_to_dev 1915 154a); do
     if [ "${nrf52840_first}" = 1 ]; then
       printf '\n## nrf52840 802.15.4 sniffer\n' >> "${kismet_site}"
       nrf52840_first="0"
@@ -259,7 +268,11 @@ detect_nordic() {
     printf 'Detected %s nrf52840 but found serial interfaces for %s.\n' "${nrf154a_usb}" "${nrf154a_serial}"
     all_nrf_accounted="1"
     if [ "${nrf154a_serial}" = 0 ]; then
-      printf 'Did you forget to install kismet/packaging/udev/99-kismet-nrf52840.rules?\n'
+      if lsmod | grep -q 'cdc_acm' > /dev/null 2>&1; then
+        true
+      else
+        printf 'Do you need to install kernel module cdc_acm?\n'
+      fi
     fi
   fi
 
