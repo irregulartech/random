@@ -74,6 +74,15 @@ while [ -n "${1:-}" ]; do
       blue_hydra="true"
       shift
       ;;
+    --detect)
+      shift
+      if [ -z "${1:-}" ]; then
+        printf -- '--detect requires a routine to run as the next param\n'
+        exit 1
+      fi
+      detect="${1}"
+      shift
+      ;;
     --log-location)
       shift
       if [ -z "${1:-}" ]; then
@@ -654,9 +663,20 @@ kick_it() {
   return "${errors_found}"
 }
 
-if kick_it; then
-  exit 0
+if [ -n "${detect:-}" ]; then
+  # run just one detection
+  if detect_${detect}; then
+    exit 0
+  else
+    printf '%s found likely errors, please review the output carefully.\n' "${0}"
+    exit 1
+  fi
 else
-  printf '%s found likely errors, please review the output carefully.\n' "${0}"
-  exit 1
+  # run them all
+  if kick_it; then
+    exit 0
+  else
+    printf '%s found likely errors, please review the output carefully.\n' "${0}"
+    exit 1
+  fi
 fi
