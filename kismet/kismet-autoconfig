@@ -192,13 +192,13 @@ detect_nordic() {
         printf 'source=mousejack-%s:hop_rate=82/sec,type=nrfmousejack\n' "${BUS}" >> "${kismet_site}"
         ;;
       154a)
-        # nrf51822 802.15.4 sniffer
-        # needs to be found by /dev/nrf51822*
+        # nrf52840 802.15.4 sniffer
+        # needs to be found by /dev/nrf52840*
         : $(( nrf154a_usb += 1 ))
         ;;
       522a)
-        # nrf52840 ble sniffer
-        # needs to be found by /dev/nrf52840*
+        # nrf51822 ble sniffer
+        # needs to be found by /dev/nrf51822*
         : $(( nrf522a_usb += 1 ))
         ;;
       7777)
@@ -226,17 +226,17 @@ detect_nordic() {
       continue
     fi
     if [ "${nrf51822_first}" = "1" ]; then
-      printf '\n## nrf51822 802.15.4 sniffer\n' >> "${kismet_site}"
+      printf '\n## nrf51822 ble sniffer\n' >> "${kismet_site}"
       nrf51822_first="0"
     fi
     printf 'source=nrf51822:device=%s,type=nrf51822\n' "${nrf51822}" >> "${kismet_site}"
-    nrf154a_serial=$(( nrf154a_serial + 1 ))
+    nrf522a_serial=$(( nrf522a_serial + 1 ))
   done
   [ "${ZSH_NAME:-}" = "zsh" ] && setopt nomatch
-  if [ "${nrf154a_usb}" != "${nrf154a_serial}" ]; then
-    printf 'Detected %s nrf51822 but found serial interfaces for %s.\n' "${nrf154a_usb}" "${nrf154a_serial}"
+  if [ "${nrf522a_usb}" != "${nrf522a_serial}" ]; then
+    printf 'Detected %s nrf51822 but found serial interfaces for %s.\n' "${nrf522a_usb}" "${nrf522a_serial}"
     all_nrf_accounted="1"
-    if [ "${nrf154a_serial}" = 0 ]; then
+    if [ "${nrf522a_serial}" = 0 ]; then
       printf 'Did you forget to install kismet/packaging/udev/99-kismet-nrf51822.rules?\n'
     fi
   fi
@@ -248,17 +248,17 @@ detect_nordic() {
       continue
     fi
     if [ "${nrf52840_first}" = 1 ]; then
-      printf '\n## nrf52840 ble sniffer\n' >> "${kismet_site}"
+      printf '\n## nrf52840 802.15.4 sniffer\n' >> "${kismet_site}"
       nrf52840_first="0"
     fi
     printf 'source=nrf52840:device=%s,type=nrf52840\n' "${nrf52840}" >> "${kismet_site}"
-    nrf522a_serial=$(( nrf522a_serial + 1 ))
+    nrf154a_serial=$(( nrf154a_serial + 1 ))
   done
   [ "${ZSH_NAME:-}" = "zsh" ] && setopt nomatch
-  if [ "${nrf522a_usb}" != "${nrf522a_serial}" ]; then
-    printf 'Detected %s nrf52840 but found serial interfaces for %s.\n' "${nrf522a_usb}" "${nrf522a_serial}"
+  if [ "${nrf154a_usb}" != "${nrf154a_serial}" ]; then
+    printf 'Detected %s nrf52840 but found serial interfaces for %s.\n' "${nrf154a_usb}" "${nrf154a_serial}"
     all_nrf_accounted="1"
-    if [ "${nrf522a_serial}" = 0 ]; then
+    if [ "${nrf154a_serial}" = 0 ]; then
       printf 'Did you forget to install kismet/packaging/udev/99-kismet-nrf52840.rules?\n'
     fi
   fi
