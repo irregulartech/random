@@ -128,6 +128,25 @@ while [ -n "${1:-}" ]; do
   esac
 done
 
+# Validate detect option
+if [ -n "${detect:-}" ]; then
+  case ${detect} in
+    gps) true ;;
+    linuxbluetooth) true ;;
+    linuxwifi) true ;;
+    nordic) true ;;
+    nxp) true ;;
+    rtl) true ;;
+    ti) true ;;
+    ubertooth) true ;;
+    *)
+      printf 'invalid option --detect %s\n' "${detect}"
+      printf 'Available detections: gps linuxbluetooth linuxwifi nordic nxp rtl ti ubertooth\n'
+      exit 1
+      ;;
+  esac
+fi
+
 if [ -n "${1:-}" ]; then
   if ! touch "${1}" || [ ! -w "${1}" ]; then
     printf 'Unable to write to config %s\n' "${1}" >&2
@@ -674,7 +693,7 @@ kick_it() {
 
 if [ -n "${detect:-}" ]; then
   # run just one detection
-  if detect_${detect}; then
+  if detect_"${detect}"; then
     exit 0
   else
     printf '%s found likely errors, please review the output carefully.\n' "${0}"
