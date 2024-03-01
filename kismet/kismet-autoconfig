@@ -654,7 +654,7 @@ detect_gps() {
           printf 'Best gps lock is 2d.\n'
           ;;
       esac
-      if ! pgrep -f "gpsd.* -n " > /dev/null 2>&1; then
+      if ! pgrep -fa "gpsd.* -n " > /dev/null 2>&1; then
         printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
       fi
       printf 'gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
