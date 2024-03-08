@@ -396,7 +396,7 @@ detect_ubertooth() {
               ubertooth_errors="1"
             else
               printf 'Ubertooth %s detected but provided an unknown error:\n' "${ubertooth_device}" >&2
-              printf '%s' "${ubertooth_rx_stderr}" >&2
+              printf '%s\n' "${ubertooth_rx_stderr}" >&2
               printf '# ubertooth-%s skipped due to unknown error\n' "${ubertooth_device}" >> "${kismet_site}"
               printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
               ubertooth_errors="1"
