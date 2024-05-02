@@ -3,6 +3,7 @@ What is this?  It's a tool that automatically detects hardware connected to your
 I will happily accept bug reports and pull requests for more hardware that is supported by kismet but not detected by this script.
 
 I have included an example kismet.service file.  The purpose of this file is to install in /etc/systemd/system/ and use to run kismet.  This modified version is the same as the upstream kismet version except it runs /usr/local/sbin/kismet-autodetect first to generate a config.  Don't forget to actually put kismet-autodetect in /usr/local/sbin if you use this service file.
+I have also included an example override.conf for kismet.service.  Instead of using the included kismet.service, you can use the upstream kismet.service without modification and install override.conf in /etc/systemd/system/kismet.service.d/ which will effectively add the lines from the override into the upstream service file without change of becoming out of date.  This expects kismet-autoconfig installed in /usr/local/sbin/ and runs it before kismet to create a config
 
 Currently available flags:
     `--bluehydra`
