@@ -17,7 +17,7 @@ elif [ -z "${USERID}" ]; then
 	printf 'Unable to determine user id, permission errors may occur.\n'
 fi
 
-VERS="v1.9"
+VERS="v1.9.1"
 
 blue_hydra="false"
 gentle="false"
@@ -25,6 +25,7 @@ log_location=""
 rtl_skip_zero="false"
 trigger_lar="true"
 truncate_data="false"
+ubertooth_enable="false"
 wifi_backhaul=""
 
 if [ ! -x "$(command -v airmon-ng 2>&1)" ]; then
@@ -82,6 +83,10 @@ while [ -n "${1:-}" ]; do
         exit 1
       fi
       detect="${1}"
+      shift
+      ;;
+    --enable-ubertooth)
+      ubertooth_enable="true"
       shift
       ;;
     --gentle)
@@ -362,11 +367,21 @@ detect_ubertooth() {
         continue
       fi
       if [ "${gentle}" = "true" ]; then
-        printf 'source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+        if [ ubertooth_enable = "true" ]; then
+          printf 'source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+        else
+          printf '# ubertooth sources can be unstable, enable with --enable-ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+          printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+        fi
         continue
       fi
       if ubertooth_rx_stderr="$(ubertooth-rx -z -t 1 -U "${ubertooth_device}" 2>&1 > /dev/null)"; then
-        printf 'source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+        if [ ubertooth_enable = "true" ]; then
+          printf 'source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+        else
+          printf '# ubertooth sources can be unstable, enable with --enable-ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+          printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+        fi
         continue
       fi
       if [ -z "${ubertooth_rx_stderr:-}" ]; then
