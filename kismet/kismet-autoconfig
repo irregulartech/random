@@ -2,22 +2,7 @@
 set -e
 set -u
 
-# airmon-ng doesn't work without root
-if [ -x "$(command -v id 2> /dev/null)" ]; then
-	USERID="$(id -u 2> /dev/null)"
-fi
-
-if [ -z "${USERID}" ] && [ -n "$(id -ru)" ]; then
-	USERID="$(id -ru)"
-fi
-
-if [ -n "${USERID}" ] && [ "${USERID}" != "0" ]; then
-	printf 'Run it as root\n' ; exit 1;
-elif [ -z "${USERID}" ]; then
-	printf 'Unable to determine user id, permission errors may occur.\n'
-fi
-
-VERS="v1.9.1"
+VERS='v1.9.5'
 
 blue_hydra="false"
 gentle="false"
@@ -43,18 +28,24 @@ if [ ! -x "$(command -v jq 2>&1)" ]; then
   printf 'this tool is typically available in the "jq" package\n' >&2
   exit 1
 fi
-if [ ! -x "$(command -v pgrep 2>&1)" ]; then
+# On busybox/ash this returns "pgrep" because it's a built-in
+# so for this check we rely on command -v exit code and don't test -x
+if ! command -v pgrep > /dev/null 2>&1; then
   printf 'pgrep is required, please install it\n' >&2
   printf 'this tool is typically available in the "procps" package\n' >&2
   exit 1
 fi
-if [ ! -x "$(command -v lsmod 2>&1)" ]; then
+# On busybox/ash this returns "lsmod" because it's a built-in
+# so for this check we rely on command -v exit code and don't test -x
+if ! command -v lsmod > /dev/null 2>&1; then
   printf 'lsmod is required, please install it\n' >&2
   printf 'this tool is typically available in the "kmod" package\n' >&2
   exit 1
 fi
 # maybe add support for ncat from nmap?
-if [ ! -x "$(command -v nc 2>&1)" ]; then
+# On busybox/ash this returns "lsmod" because it's a built-in
+# so for this check we rely on command -v exit code and don't test -x
+if ! command -v nc > /dev/null 2>&1; then
   printf 'Some kind of netcat is required as "nc", please install it\n' >&2
   printf 'this tool is typically available in the "netcat" package\n' >&2
   exit 1
@@ -367,19 +358,19 @@ detect_ubertooth() {
         continue
       fi
       if [ "${gentle}" = "true" ]; then
-        if [ ubertooth_enable = "true" ]; then
+        if [ "${ubertooth_enable}" = "true" ]; then
           printf 'source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         else
-          printf '# ubertooth sources can be unstable, enable with --enable-ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+          printf '# ubertooth sources can be unstable, enable with --enable-ubertooth\n' >> "${kismet_site}"
           printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         fi
         continue
       fi
       if ubertooth_rx_stderr="$(ubertooth-rx -z -t 1 -U "${ubertooth_device}" 2>&1 > /dev/null)"; then
-        if [ ubertooth_enable = "true" ]; then
+        if [ "${ubertooth_enable}" = "true" ]; then
           printf 'source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         else
-          printf '# ubertooth sources can be unstable, enable with --enable-ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
+          printf '# ubertooth sources can be unstable, enable with --enable-ubertooth\n' >> "${kismet_site}"
           printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         fi
         continue
@@ -601,8 +592,12 @@ detect_linuxwifi() {
     fi
   fi
 
-  wlan_devices="$(airmon-ng | grep --color=never phy | awk '{print $2}')"
-  if [ -z "${wlan_devices:-}" ]; then
+  wlan_devices="$(airmon-ng 2>&1| grep --color=never -e 'phy' -e 'root' | awk '{print $2}')"
+  if [ "${wlan_devices:-}" = "it" ]; then # "run it as root" | awk '{print $2}'
+    printf '\nThe installed version of airmon-ng must be run as root.\n' >&2
+    printf 'Please run this script as root so it can execute airmon-ng as root.\n' >&2
+    exit 1
+  elif [ -z "${wlan_devices:-}" ]; then
     return 0
   fi
   printf '\n## Wifi\n' >> "${kismet_site}"
