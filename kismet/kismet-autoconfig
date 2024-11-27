@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v1.9.6'
+VERS='v1.9.7'
 
 blue_hydra="false"
 gentle="false"
@@ -681,17 +681,17 @@ detect_gps() {
       done
       case "${gps_lock}" in
         0)
-          printf 'GPS lock unknown, are you sure your gps works?\n'
+          printf 'GPS lock unknown, are you sure your gps works?\n' >&2
           ;;
         1)
-          printf 'GPS has no lock.\n'
+          printf 'GPS has no lock.\n' >&2
           ;;
         2)
-          printf 'Best gps lock is 2d.\n'
+          printf 'Best gps lock is 2d.\n' >&2
           ;;
       esac
       if ! pgrep -fa "gpsd.* -n " > /dev/null 2>&1; then
-        printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n'
+        printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n' >&2
       fi
       printf 'gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
     else
