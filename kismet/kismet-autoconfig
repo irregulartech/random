@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v1.9.7'
+VERS='v1.9.8'
 
 blue_hydra="false"
 gentle="false"
@@ -35,6 +35,9 @@ if ! command -v pgrep > /dev/null 2>&1; then
   printf 'this tool is typically available in the "procps" package\n' >&2
   exit 1
 fi
+# XXX: This check finds both the built-in for busybox or the actual tool.  The built-in is missing features we use.
+# XXX: Enhance this check to find the actual tool and ignore the busybox version.  ash
+# XXX This horribly breaks in busybox libusb, -d 'vendor:' does not do anything
 if [ -d /sys/bus/usb ]; then
   if ! command -v lsusb 2>&1; then
     printf "Please install lsusb from your distro's package manager.\n"
@@ -255,10 +258,7 @@ detect_nordic() {
 
   IFS='
 '
-  for device in \
-    $(lsusb -d '1915:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort) \
-    $(lsusb -d '239a:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort)
-    do
+  for device in $(lsusb -d '1915:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort) $(lsusb -d '239a:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort); do
     VID="$(printf '%s' "${device}" | awk '{print $1}' | awk -F: '{print $1}')"
     PID="$(printf '%s' "${device}" | awk '{print $1}' | awk -F: '{print $2}')"
     BUS="$(printf '%s' "${device}" | awk '{print $2}')"
@@ -367,7 +367,11 @@ detect_ubertooth() {
     printf 'Ubertooth device found using lsusb, but ubertooth tools are not installed\n' >&2
     printf 'Typically this package is available as "ubertooth".\n' >&2
     printf '# Ubertooth found, but ubertooth tools are not installed and are required.\n' > "${kismet_site}"
-    return 1
+    if [ "${ubertooth_enable}" = "true" ]; then
+      return 1
+    else
+      return 0
+    fi
   fi
   uberteeth="$(ubertooth-util -N 2>/dev/null)"
   if [ "${uberteeth}" -gt "0" ]; then
@@ -441,7 +445,11 @@ detect_ubertooth() {
         ubertooth_errors="1"
       fi
     done
-    return "${ubertooth_errors}"
+    if [ "${ubertooth_enable}" = "true" ]; then
+      return "${ubertooth_errors}"
+    else
+      return 0
+    fi
   fi
   return 0
 }
