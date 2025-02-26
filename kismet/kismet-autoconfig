@@ -712,6 +712,8 @@ detect_gps() {
       printf '# gpsd is running but no devices are configure, please configure gpsd to use your gps if you want location information.\n' >> "${kismet_site}"
       printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
       if [ "${gpsd_optional}" = "false" ]; then
+        printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
+        printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
         return 1
       fi
     fi
@@ -720,6 +722,8 @@ detect_gps() {
     printf '# gpsd is not running, please configure and start it if you want location information.\n' >> "${kismet_site}"
     printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
     if [ "${gpsd_optional}" = "false" ]; then
+      printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
+      printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
       return 1
     fi
   fi
