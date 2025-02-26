@@ -2,10 +2,11 @@
 set -e
 set -u
 
-VERS='v1.9.8'
+VERS='v1.9.9'
 
 blue_hydra="false"
 gentle="false"
+gpsd_optional="false"
 log_location=""
 rtl_skip_zero="false"
 trigger_lar="true"
@@ -106,6 +107,10 @@ while [ -n "${1:-}" ]; do
       ;;
     --gentle)
       gentle="true"
+      shift
+      ;;
+    --gpsd-optional)
+      gpsd_optional="true"
       shift
       ;;
     --log-location)
@@ -706,13 +711,17 @@ detect_gps() {
       printf 'GPSD is running but no devices are configured, please configure gpsd to use your gps if you want location information.\n' >&2
       printf '# gpsd is running but no devices are configure, please configure gpsd to use your gps if you want location information.\n' >> "${kismet_site}"
       printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
-      return 1
+      if [ "${gpsd_optional}" = "false" ]; then
+        return 1
+      fi
     fi
   else
     printf 'GPSD is not running, please configure and start it if you want location information.\n' >&2
     printf '# gpsd is not running, please configure and start it if you want location information.\n' >> "${kismet_site}"
     printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
-    return 1
+    if [ "${gpsd_optional}" = "false" ]; then
+      return 1
+    fi
   fi
   return 0
 }
