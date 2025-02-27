@@ -16,31 +16,31 @@ ubertooth_enable="false"
 wifi_backhaul=""
 
 if [ ! -x "$(command -v airmon-ng 2>&1)" ]; then
-  printf 'airmon-ng is required, please install it\n' >&2
-  printf 'this tool is typically available in the "aircrack-ng" package\n' >&2
+  printf 'FATAL: airmon-ng is required, please install it\n' >&2
+  printf 'FATAL: this tool is typically available in the "aircrack-ng" package\n' >&2
   exit 1
 fi
 if [ ! -x "$(command -v ss 2>&1)" ]; then
-  printf 'ss is required, please install it\n' >&2
-  printf 'this tool is typically available in the "ss" package\n' >&2
+  printf 'FATAL: ss is required, please install it\n' >&2
+  printf 'FATAL: this tool is typically available in the "ss" package\n' >&2
   exit 1
 fi
 if [ ! -x "$(command -v jq 2>&1)" ]; then
-  printf 'jq is required, please install it\n' >&2
-  printf 'this tool is typically available in the "jq" package\n' >&2
+  printf 'FATAL: jq is required, please install it\n' >&2
+  printf 'FATAL: this tool is typically available in the "jq" package\n' >&2
   exit 1
 fi
 # On busybox/ash this returns "pgrep" because it's a built-in
 # so for this check we rely on command -v exit code and don't test -x
 if ! command -v pgrep > /dev/null 2>&1; then
-  printf 'pgrep is required, please install it\n' >&2
-  printf 'this tool is typically available in the "procps" package\n' >&2
+  printf 'FATAL: pgrep is required, please install it\n' >&2
+  printf 'FATAL: this tool is typically available in the "procps" package\n' >&2
   exit 1
 fi
 
 if [ -d /sys/bus/usb ]; then
   if ! command -v lsusb > /dev/null 2>&1; then
-    printf "Please install lsusb from your distro's package manager.\n"
+    printf "FATAL: Please install lsusb from your distro's package manager.\n"
     exit 1
   else
     LSUSB=1
@@ -56,36 +56,27 @@ if [ "${LSUSB=1}" ]; then
     if [ -x "/usr/bin/lsusb" ]; then
       LSUSB_CMD="/usr/bin/lsusb"
     else
-      printf 'Only the busybox lsusb is available, and it is not currently supported.\n' >&2
-      printf 'Please install the full lsusb package from your distro\n' >&2
+      printf 'ERROR: Only the busybox lsusb is available, and it is not currently supported.\n' >&2
+      printf 'ERROR: Please install the full lsusb package from your distro\n' >&2
+      printf 'ERROR: This may be fatal in the future.\n' >&2
       LSUSB=0
     fi
   fi
 fi
 
-usb_check() {
-  if [ "${LSUSB}" = "0" ]; then
-    printf "This system does not appear to support usb devices but you asked for detection of a usb device.\n" >&2
-    printf "Unable to comply, /sys/bus/usb or lsusb are missing\n" >&2
-    return 1
-  else
-    return 0
-  fi
-}
-
 # On busybox/ash this returns "lsmod" because it's a built-in
 # so for this check we rely on command -v exit code and don't test -x
 if ! command -v lsmod > /dev/null 2>&1; then
-  printf 'lsmod is required, please install it\n' >&2
-  printf 'this tool is typically available in the "kmod" package\n' >&2
+  printf 'FATAL: lsmod is required, please install it\n' >&2
+  printf 'FATAL: this tool is typically available in the "kmod" package\n' >&2
   exit 1
 fi
 # maybe add support for ncat from nmap?
 # On busybox/ash this returns "lsmod" because it's a built-in
 # so for this check we rely on command -v exit code and don't test -x
 if ! command -v nc > /dev/null 2>&1; then
-  printf 'Some kind of netcat is required as "nc", please install it\n' >&2
-  printf 'this tool is typically available in the "netcat" package\n' >&2
+  printf 'FATAL: Some kind of netcat is required as "nc", please install it\n' >&2
+  printf 'FATAL: this tool is typically available in the "netcat" package\n' >&2
   exit 1
 else
   # this doesn't support gnu netcat which needs -c?
@@ -108,7 +99,7 @@ while [ -n "${1:-}" ]; do
     --detect)
       shift
       if [ -z "${1:-}" ]; then
-        printf -- '--detect requires a routine to run as the next param\n'
+        printf -- 'FATAL: --detect requires a routine to run as the next param\n'
         exit 1
       fi
       detect="${1}"
@@ -129,7 +120,7 @@ while [ -n "${1:-}" ]; do
     --log-location)
       shift
       if [ -z "${1:-}" ]; then
-        printf -- '--log-location requires a path as the next param\n'
+        printf -- 'FATAL: --log-location requires a path as the next param\n'
         exit 1
       fi
       log_location="${1}"
@@ -154,7 +145,7 @@ while [ -n "${1:-}" ]; do
     --wifi-backhaul)
       shift
       if [ -z "${1:-}" ]; then
-        printf -- '--wifi-backhaul requires an interface name as the next param\n'
+        printf -- 'FATAL: --wifi-backhaul requires an interface name as the next param\n'
         exit 1
       fi
       wifi_backhaul="${1}"
@@ -183,8 +174,8 @@ if [ -n "${detect:-}" ]; then
     ti) true ;;
     ubertooth) true ;;
     *)
-      printf 'invalid option --detect %s\n' "${detect}"
-      printf 'Available detections: gps linuxbluetooth linuxwifi nordic nxp reg rtl ti ubertooth\n'
+      printf 'FATAL: invalid option --detect %s\n' "${detect}"
+      printf 'FATAL: Available detections: gps linuxbluetooth linuxwifi nordic nxp reg rtl ti ubertooth\n'
       exit 1
       ;;
   esac
@@ -192,12 +183,12 @@ fi
 
 if [ -n "${1:-}" ]; then
   if ! touch "${1}" || [ ! -w "${1}" ]; then
-    printf 'Unable to write to config %s\n' "${1}" >&2
+    printf 'FATAL: Unable to write to config %s\n' "${1}" >&2
     exit 1
   else
     if [ "$(awk -F. '{print $1}' /proc/uptime)" -lt 60 ]; then
       sleepy_tyme=$(( 60 - $(awk -F. '{print $1}' /proc/uptime) ))
-      printf 'Sleeping for %s seconds before writing config...\n' "${sleepy_tyme}" >&2
+      printf 'INFO: Sleeping for %s seconds before writing config...\n' "${sleepy_tyme}" >&2
       sleep "${sleepy_tyme}"
     fi
   fi
@@ -214,9 +205,19 @@ if [ -n "${log_location:-}" ]; then
   fi
 fi
 
+usb_check() {
+  if [ "${LSUSB}" = "0" ]; then
+    printf "ERROR: This system does not appear to support usb devices but you asked for detection of a usb device.\n" >&2
+    printf "ERROR: Unable to comply, /sys/bus/usb or lsusb are missing\n" >&2
+    return 1
+  else
+    return 0
+  fi
+}
+
 vid_pid_to_dev(){
   if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then
-    printf 'vid_pid_to_dev requires vid as param one and pid as param two\n'
+    printf 'FATAL: vid_pid_to_dev requires vid as param one and pid as param two\n'
     exit 1
   fi
   # we want this to be split
@@ -231,7 +232,7 @@ cdc_acm_check() {
   if lsmod | grep -q 'cdc_acm' > /dev/null 2>&1; then
     true
   else
-    printf 'Kernel module cdc_acm is required but not loaded. Do you need to install it?\n'
+    printf 'ERROR: Kernel module cdc_acm is required but not loaded. Do you need to install it?\n'
   fi
 }
 
@@ -261,7 +262,7 @@ detect_nxp() {
     : $(( nxp_serial += 1 ))
   done
   if [ "${nxp_usb}" != "${nxp_serial}" ]; then
-    printf 'Detected %s nxp_kw1z but found serial interfaces for %s.\n' "${nxp_usb}" "${nxp_serial}" >&2
+    printf 'ERROR: Detected %s nxp_kw1z but found serial interfaces for %s.\n' "${nxp_usb}" "${nxp_serial}" >&2
     all_nxp_accounted="1"
     if [ "${nxp_serial}" = 0 ]; then
       cdc_acm_check
@@ -305,12 +306,12 @@ detect_nordic() {
         : $(( nrf522a_usb += 1 ))
         ;;
       7777)
-        printf 'Detected stock Crazyradio PA dongle, did you forget to flash the rfstorm firmware?\n' >&2
-        printf 'Information available here: https://github.com/BastilleResearch/nrf-research-firmware\n' >&2
+        printf 'WARN: Detected stock Crazyradio PA dongle, did you forget to flash the rfstorm firmware?\n' >&2
+        printf 'WARN: Information available here: https://github.com/BastilleResearch/nrf-research-firmware\n' >&2
         all_nrf_accounted="1"
         ;;
       *)
-        printf 'Detected unsupported nrf device %s:%s, did you forget to flash the correct firmware?\n' "${VID}" "${PID}" >&2
+        printf 'WARN: Detected unsupported nrf device %s:%s, did you forget to flash the correct firmware?\n' "${VID}" "${PID}" >&2
         all_nrf_accounted="1"
         ;;
     esac
@@ -332,7 +333,7 @@ detect_nordic() {
     nrf522a_serial=$(( nrf522a_serial + 1 ))
   done
   if [ "${nrf522a_usb}" != "${nrf522a_serial}" ]; then
-    printf 'Detected %s nrf51822 but found serial interfaces for %s.\n' "${nrf522a_usb}" "${nrf522a_serial}"
+    printf 'ERROR: Detected %s nrf51822 but found serial interfaces for %s.\n' "${nrf522a_usb}" "${nrf522a_serial}"
     all_nrf_accounted="1"
     if [ "${nrf522a_serial}" = 0 ]; then
       cdc_acm_check
@@ -372,8 +373,8 @@ detect_linuxbluetooth() {
       done
     fi
   else
-    printf 'Bluetooth detection unavailable, hciconfig not installed.\n' >&2
-    printf 'Typically this package is available as "bluez"\n' >&2
+    printf 'WARN: Bluetooth detection unavailable, hciconfig not installed.\n' >&2
+    printf 'WARN: Typically this package is available as "bluez"\n' >&2
     printf '\n## Bluetooth detection unavailable, hciconfig not installed.\n' > "${kismet_site}"
     return 1
   fi
@@ -387,8 +388,8 @@ detect_ubertooth() {
     return 0
   fi
   if [ ! -x "$(command -v ubertooth-util)" ]; then
-    printf 'Ubertooth device found using lsusb, but ubertooth tools are not installed\n' >&2
-    printf 'Typically this package is available as "ubertooth".\n' >&2
+    printf 'WARN: Ubertooth device found using lsusb, but ubertooth tools are not installed\n' >&2
+    printf 'WARN: Typically this package is available as "ubertooth".\n' >&2
     printf '# Ubertooth found, but ubertooth tools are not installed and are required.\n' > "${kismet_site}"
     if [ "${ubertooth_enable}" = "true" ]; then
       return 1
@@ -403,7 +404,7 @@ detect_ubertooth() {
     for i in $(seq 1 "${uberteeth}"); do
       ubertooth_device=$((i-1))
       if [ "${ubertooth_device}" = "1" ] && [ "${blue_hydra}" = "true" ]; then
-        printf 'Ubertooth %s detected but left for blue_hydra\n' "${ubertooth_device}" >&2
+        printf 'INFO: Ubertooth %s detected but left for blue_hydra\n' "${ubertooth_device}" >&2
         printf '# Leaving ubertooth %s for blue_hydra\n' "${ubertooth_device}" >> "${kismet_site}"
         printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         continue
@@ -427,42 +428,42 @@ detect_ubertooth() {
         continue
       fi
       if [ -z "${ubertooth_rx_stderr:-}" ]; then
-        printf 'Ubertooth test command "ubertooth-rx -z -t 1 -U %s" failed, without output.\n' "${i}" >&2
-        printf 'You are on your own to figure out why.\n' >&2
+        printf 'ERROR: Ubertooth test command "ubertooth-rx -z -t 1 -U %s" failed, without output.\n' "${i}" >&2
+        printf 'ERROR: You are on your own to figure out why.\n' >&2
         printf '# ubertooth-%s skipped due to unknown failure\n' "${ubertooth_device}" >> "${kismet_site}"
         ubertooth_errors="1"
         continue
       fi
       # If we got this far, we have an error, try to output something useful about it
       if printf '%s' "${ubertooth_rx_stderr}" | grep -q 'usb_claim_interface error -6'; then
-        printf 'Ubertooth %s detected but it appears to already be in use.\n' "${ubertooth_device}" >&2
+        printf 'ERROR: Ubertooth %s detected but it appears to already be in use.\n' "${ubertooth_device}" >&2
         if [ "${ubertooth_device}" = "1" ] && [ "${blue_hydra}" = "false" ]; then
-          printf 'Did you mean to pass --bluehydra?' >&2
+          printf 'WARN: Did you mean to pass --bluehydra?' >&2
           printf '# ubertooth-%s in use, did you mean to pass --bluehydra?\n' "${ubertooth_device}" >> "${kismet_site}"
         fi
         printf '# ubertooth-%s skipped because it is already in use\n' "${ubertooth_device}" >> "${kismet_site}"
         printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         ubertooth_errors="1"
       elif printf '%s' "${ubertooth_rx_stderr}" | grep -q 'Access denied'; then
-        printf 'Ubertooth detected but user %s does not have access to ubertooth %s hardware\n' "$(id -un)" "${ubertooth_device}" >&2
+        printf 'ERROR: Ubertooth detected but user %s does not have access to ubertooth %s hardware\n' "$(id -un)" "${ubertooth_device}" >&2
         printf '# ubertooth-%s skipped due to permission error\n' "${ubertooth_device}" >> "${kismet_site}"
         printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         ubertooth_errors="1"
       elif printf '%s' "${ubertooth_rx_stderr}" | grep -q 'Please upgrade to latest released firmware'; then
-        printf 'Ubertooth %s detected but requires a firmware upgrade to work.\n' "${ubertooth_device}" >&2
+        printf 'ERROR: Ubertooth %s detected but requires a firmware upgrade to work.\n' "${ubertooth_device}" >&2
         if [ -x "$(command -v ubertooth-dfu)" ]; then
           if [ -r '/usr/share/ubertooth/firmware/bluetooth_rxtx.dfu' ]; then
-            printf 'You can upgrade it with "ubertooth-dfu -d /usr/share/ubertooth/firmware/bluetooth_rxtx.dfu -r"\n' >&2
+            printf 'ERROR: You can upgrade it with "ubertooth-dfu -d /usr/share/ubertooth/firmware/bluetooth_rxtx.dfu -r"\n' >&2
           elif [ -r '/usr/share/ubertooth/bluetooth_rxtx.dfu' ]; then
-            printf 'You can upgrade it with "ubertooth-dfu -d /usr/share/ubertooth/bluetooth_rxtx.dfu -r"\n' >&2
+            printf 'ERROR: You can upgrade it with "ubertooth-dfu -d /usr/share/ubertooth/bluetooth_rxtx.dfu -r"\n' >&2
           fi
         fi
         printf '# ubertooth-%s skipped due to required firmware upgrade\n' "${ubertooth_device}" >> "${kismet_site}"
         printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         ubertooth_errors="1"
       else
-        printf 'Ubertooth %s detected but provided an unknown error:\n' "${ubertooth_device}" >&2
-        printf '%s\n' "${ubertooth_rx_stderr}" >&2
+        printf 'ERROR: Ubertooth %s detected but provided an unknown error:\n' "${ubertooth_device}" >&2
+        printf 'ERROR: %s\n' "${ubertooth_rx_stderr}" >&2
         printf '# ubertooth-%s skipped due to unknown error\n' "${ubertooth_device}" >> "${kismet_site}"
         printf '# source=ubertooth-%s:type=ubertooth\n' "${ubertooth_device}" >> "${kismet_site}"
         ubertooth_errors="1"
@@ -521,11 +522,11 @@ detect_rtl() {
   rtl_num_devices=$(rtl_eeprom 2>&1 >/dev/null | grep "Found [0-9][0-9]*" | sed -E 's/.*([0-9]+).*/\1/')
   if [ -n "${rtl_num_devices}" ]; then
     if [ ! -x "$(command -v rtl_433 2>&1)" ]; then
-      printf 'rtl_433 is required for type=rtl433 devices, please install it\n' >&2
-      printf 'this tool is typically available in the "rtl_433" or "rtl-433" package\n' >&2
+      printf 'ERROR: rtl_433 is required for type=rtl433 devices, please install it\n' >&2
+      printf 'ERROR: this tool is typically available in the "rtl_433" or "rtl-433" package\n' >&2
       if [ "${rtl433_optional}" = "false" ]; then
-        printf 'rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >&2
-        printf 'rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >> "${kismet_site}"
+        printf 'FATAL: rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >&2
+        printf 'FATAL: rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >> "${kismet_site}"
         return 1
       fi
     fi
@@ -534,7 +535,7 @@ detect_rtl() {
       rtl_device=$((i-1))
       if [ "${rtl_skip_zero}" = "true" ]; then
         case ${rtl_device} in
-          0) printf 'Skipping rtlsdr-0 by request\n' >&2
+          0) printf 'INFO: Skipping rtlsdr-0 by request\n' >&2
             printf '# rtlsdr-%s detected but skipped by request\n' "${rtl_device}" >> "${kismet_site}"
             printf '# source=rtl433-%s:type=rtl433\n' "${rtl_device}" >> "${kismet_site}"
             continue
@@ -562,7 +563,7 @@ detect_rtl() {
       fi
       printf '# rtl-sdr %s\n' "${rtl_device}" >> "${kismet_site}"
       if [ "${freq}" = "none" ]; then
-        printf 'You have more rtlsdrs than we know what to do with.\n' >&2
+        printf 'INFO: You have more rtlsdrs than we know what to do with.\n' >&2
         printf '# Wasting rtlsdr-%s\n' "${rtl_device}" >> "${kismet_site}"
       elif [ "${freq}" = "adsb" ]; then
         printf 'source=rtladsb-%s:name=rtladsb,type=rtladsb\n' "${rtl_device}" >> "${kismet_site}"
@@ -581,7 +582,7 @@ handle_lar() {
     return 0
   fi
   if [ -z "${1:-}" ]; then
-    printf 'Calling handle_lar without a wifi interface is not allowed.\n' >&2
+    printf 'FATAL: Calling handle_lar without a wifi interface is not allowed.\n' >&2
     exit 1
   fi
   # This isn't as robust as airmon-ng but I don't think I care since it works for iwlwifi
@@ -601,8 +602,8 @@ handle_lar() {
           fi
         done
         if [ -z "${vif_name:-}" ]; then
-          printf 'Your iwlwifi device %s needs LAR set, but no managed interface is available to do that.\n' "${1}" >&2
-          printf 'Please run "airmon-ng stop %s" or create a managed interface manually.\n' "${1}" >&2
+          printf 'FATAL: Your iwlwifi device %s needs LAR set, but no managed interface is available to do that.\n' "${1}" >&2
+          printf 'FATAL: Please run "airmon-ng stop %s" or create a managed interface manually.\n' "${1}" >&2
           exit 1
         fi
         was_down="0"
@@ -610,8 +611,11 @@ handle_lar() {
           ip link set "${vif_name}" up >&2
           was_down="1"
         fi
-        iw "${vif_name}" scan > /dev/null 2>&1
-        printf 'LAR set for %s\n' "${vif_name}" >&2
+        if iw "${vif_name}" scan > /dev/null 2>&1; then
+          printf 'INFO: LAR set for %s\n' "${vif_name}" >&2
+        else
+          printf 'ERROR: LAR failed to set for %s\n' "${vif_name}" >&2
+        fi
         sleep 1
         if [ "${was_down}" = "1" ]; then
           ip link set "${vif_name}" down >&2
@@ -624,14 +628,14 @@ handle_lar() {
 
 detect_reg() {
   if iw reg get | grep -q 'country 00:'; then
-    printf '\nRegulatory Domain appears to be unset, please consider setting it with "iw reg set XX"\n' >&2
-    printf 'https://wireless.wiki.kernel.org/en/users/documentation/iw#updating_your_regulatory_domain\n' >&2
+    printf '\nWARN: Regulatory Domain appears to be unset, please consider setting it with "iw reg set XX"\n' >&2
+    printf 'WARN: https://wireless.wiki.kernel.org/en/users/documentation/iw#updating_your_regulatory_domain\n' >&2
     printf '\n## Wifi Regulatory Domain appears to be unset, please consider setting it with "iw reg set XX"\n' >> "${kismet_site}"
     # Should this return 1?
     return 0
   else
     for regdomain in $(iw reg get | awk '/country/ {print substr($2,1,length($2)-1)}' | sort -u); do
-      printf '\nRegulatory Domain set to %s, see "iw reg get" for details\n' "${regdomain}" >&2
+      printf '\nINFO: Regulatory Domain set to %s, see "iw reg get" for details\n' "${regdomain}" >&2
       printf '\n## Wifi Regulatory Domain set to %s\n' "${regdomain}" >> "${kismet_site}"
     done
     return 0
@@ -660,8 +664,8 @@ detect_linuxwifi() {
 
   wlan_devices="$(airmon-ng 2>&1| grep --color=never -e 'phy' -e 'root' | awk '{print $2}')"
   if [ "${wlan_devices:-}" = "it" ]; then # "run it as root" | awk '{print $2}'
-    printf '\nThe installed version of airmon-ng must be run as root.\n' >&2
-    printf 'Please run this script as root so it can execute airmon-ng as root.\n' >&2
+    printf '\nFATAL: The installed version of airmon-ng must be run as root.\n' >&2
+    printf 'FATAL: Please run this script as root so it can execute airmon-ng as root.\n' >&2
     exit 1
   elif [ -z "${wlan_devices:-}" ]; then
     return 0
@@ -671,7 +675,7 @@ detect_linuxwifi() {
     #check off phys and only do each one once, picking interfaces already in monitor mode if available
     #PHYDEV="$(cat "/sys/class/net/${wlan}/phy80211/name")"
     if [ -n "${wifi_backhaul:-}" ]; then
-      printf 'Ignoring device %s because it is being used as wifi backhaul\n' "${wlan}" >&2
+      printf 'INFO: Ignoring device %s because it is being used as wifi backhaul\n' "${wlan}" >&2
       printf '# Ignoring device %s because it is being used as wifi backhaul\n' "${wlan}" >> "${kismet_site}"
       continue
     fi
@@ -682,7 +686,7 @@ detect_linuxwifi() {
       if [ -n "${DRIVER:-}" ]; then
         if [ "${DRIVER}" = "rt2800usb" ]; then
           if [ "${coconut_found}" = "1" ]; then
-            printf 'Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >&2
+            printf 'INFO: Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >&2
             printf '# Ignoring individual rt2800usb device %s because Hak5 Coconut present.\n' "${wlan}" >> "${kismet_site}"
             continue
           fi
@@ -716,41 +720,41 @@ detect_gps() {
           1) [ "${gps_lock}" -lt 1 ] && gps_lock="1";;
           2) [ "${gps_lock}" -lt 2 ] && gps_lock="2";;
           3) [ "${gps_lock}" -lt 3 ] && gps_lock="3";;
-          *) printf 'Unknown gps lock state %\n' "${lock}" >&2
+          *) printf 'ERROR: Unknown gps lock state %\n' "${lock}" >&2
         esac
       done
       case "${gps_lock}" in
         0)
-          printf 'GPS lock unknown, are you sure your gps works?\n' >&2
+          printf 'ERROR: GPS lock unknown, are you sure your gps works?\n' >&2
           ;;
         1)
-          printf 'GPS has no lock.\n' >&2
+          printf 'WARN: GPS has no lock.\n' >&2
           ;;
         2)
-          printf 'Best gps lock is 2d.\n' >&2
+          printf 'WARN: Best gps lock is 2d.\n' >&2
           ;;
       esac
       if ! pgrep -fa "gpsd.* -n " > /dev/null 2>&1; then
-        printf 'It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n' >&2
+        printf 'WARN: It may help to add "-n" to GPSD_OPTIONS so gpsd polls all the time.\n' >&2
       fi
       printf 'gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
     else
-      printf 'GPSD is running but no devices are configured, please configure gpsd to use your gps if you want location information.\n' >&2
+      printf 'ERROR: GPSD is running but no devices are configured, please configure gpsd to use your gps if you want location information.\n' >&2
       printf '# gpsd is running but no devices are configure, please configure gpsd to use your gps if you want location information.\n' >> "${kismet_site}"
       printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
       if [ "${gpsd_optional}" = "false" ]; then
-        printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
-        printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
+        printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
+        printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
         return 1
       fi
     fi
   else
-    printf 'GPSD is not running, please configure and start it if you want location information.\n' >&2
+    printf 'ERROR: GPSD is not running, please configure and start it if you want location information.\n' >&2
     printf '# gpsd is not running, please configure and start it if you want location information.\n' >> "${kismet_site}"
     printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
     if [ "${gpsd_optional}" = "false" ]; then
-      printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
-      printf 'GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
+      printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
+      printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
       return 1
     fi
   fi
@@ -798,7 +802,7 @@ if [ -n "${detect:-}" ]; then
   if detect_"${detect}"; then
     exit 0
   else
-    printf '%s found likely errors, please review the output carefully.\n' "${0}"
+    printf 'FATAL: %s found fatal errors, please review the output carefully.\n' "${0}"
     exit 1
   fi
 else
@@ -806,7 +810,7 @@ else
   if kick_it; then
     exit 0
   else
-    printf '%s found likely errors, please review the output carefully.\n' "${0}"
+    printf 'FATAL: %s found fatal errors, please review the output carefully.\n' "${0}"
     exit 1
   fi
 fi
