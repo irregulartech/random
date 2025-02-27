@@ -2,12 +2,13 @@
 set -e
 set -u
 
-VERS='v1.9.9'
+VERS='v1.9.10'
 
 blue_hydra="false"
 gentle="false"
 gpsd_optional="false"
 log_location=""
+rtl433_optional="false"
 rtl_skip_zero="false"
 trigger_lar="true"
 truncate_data="false"
@@ -132,6 +133,10 @@ while [ -n "${1:-}" ]; do
         exit 1
       fi
       log_location="${1}"
+      shift
+      ;;
+    --rtl433-optional)
+      rtl433_optional="true"
       shift
       ;;
     --rtl-skip-zero)
@@ -515,6 +520,15 @@ detect_rtl() {
   fi
   rtl_num_devices=$(rtl_eeprom 2>&1 >/dev/null | grep "Found [0-9][0-9]*" | sed -E 's/.*([0-9]+).*/\1/')
   if [ -n "${rtl_num_devices}" ]; then
+    if [ ! -x "$(command -v rtl_433 2>&1)" ]; then
+      printf 'rtl_433 is required for type=rtl433 devices, please install it\n' >&2
+      printf 'this tool is typically available in the "rtl_433" or "rtl-433" package\n' >&2
+      if [ "${rtl433_optional}" = "false" ]; then
+        printf 'rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >&2
+        printf 'rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >> "${kismet_site}"
+        return 1
+      fi
+    fi
     printf "\n## RTL-SDR type sources\n" >> "${kismet_site}"
     for i in $(seq 1 "${rtl_num_devices}"); do
       rtl_device=$((i-1))
