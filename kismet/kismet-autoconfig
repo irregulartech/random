@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v1.9.10'
+VERS='v1.9.11'
 
 blue_hydra="false"
 gentle="false"
@@ -38,30 +38,29 @@ if ! command -v pgrep > /dev/null 2>&1; then
   exit 1
 fi
 
-if [ -d /sys/bus/usb ]; then
-  if ! command -v lsusb > /dev/null 2>&1; then
-    printf "FATAL: Please install lsusb from your distro's package manager.\n"
-    exit 1
-  else
-    LSUSB=1
-  fi
-else
-  LSUSB=0
-fi
-# XXX busybox lsusb, -d 'vendor:' does not do anything, so we avoid it
 LSUSB_CMD="false"
-if [ "${LSUSB=1}" ]; then
+LSUSB=0
+if [ -d /sys/bus/usb ]; then
   LSUSB_CMD="$(command -v lsusb 2>&1)"
-  if [ "${LSUSB_CMD}" = "lsusb" ]; then
-    if [ -x "/usr/bin/lsusb" ]; then
-      LSUSB_CMD="/usr/bin/lsusb"
+  if [ -x "${LSUSB_CMD}" ]; then
+    LSUSB=1
+  else
+    if [ "${LSUSB_CMD}" = "lsusb" ]; then
+      # XXX busybox lsusb, -d 'vendor:' does not do anything, so we avoid it
+      if [ -x "/usr/bin/lsusb" ]; then
+        LSUSB_CMD="/usr/bin/lsusb"
+        LSUSB=1
+      else
+        printf 'FATAL: Only the busybox lsusb is available, and it is not currently supported.\n' >&2
+        printf 'FATAL: Please install the full lsusb package from your distro\n' >&2
+        exit 1
+      fi
     else
-      printf 'ERROR: Only the busybox lsusb is available, and it is not currently supported.\n' >&2
-      printf 'ERROR: Please install the full lsusb package from your distro\n' >&2
-      printf 'ERROR: This may be fatal in the future.\n' >&2
-      LSUSB=0
+      printf 'FATAL: lsusb detected but cannot run.  How did this happen?\n' >&2
+      exit 1
     fi
   fi
+# else no usb support needed
 fi
 
 # On busybox/ash this returns "lsmod" because it's a built-in
