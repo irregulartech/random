@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v1.9.11'
+VERS='v1.9.12'
 
 blue_hydra="false"
 gentle="false"
@@ -793,6 +793,8 @@ kick_it() {
   detect_gps || errors_found="1"
   add_log_details || errors_found="1"
   add_user_config || errors_found="1"
+  # If the last line does not end with a newline it gets ignored, so pad the file
+  printf "\n" >> "${kismet_site}"
   return "${errors_found}"
 }
 
