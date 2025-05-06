@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.0.0'
+VERS='v2.0.1'
 
 blue_hydra="false"
 gentle="false"
@@ -525,6 +525,26 @@ detect_rtl() {
         return 1
       fi
     fi
+    if [ "${rtl_num_devices}" -gt 2 ]; then
+      if [ -r '/sys/module/usbcore/parameters/usbfs_memory_mb' ]; then
+        if [ "$(cat /sys/module/usbcore/parameters/usbfs_memory_mb)" -gt "0" ]; then
+          if [ -w '/sys/module/usbcore/parameters/usbfs_memory_mb' ]; then
+            if echo '0' > /sys/module/usbcore/parameters/usbfs_memory_mb; then
+              printf 'INFO: automatically updated usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >&2
+            else
+              printf 'FATAL: failed to update usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >&2
+              return 1
+            fi
+          else
+            printf 'FATAL: no permission to update usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >&2
+            return 1
+          fi
+        fi
+      else
+        printf 'WARN: unable to detect usbcore.usbfs_memory_mb setting, if you have problems with rtlsdr please adjust it yourself.\n' >&2
+        printf 'WARN: unable to detect usbcore.usbfs_memory_mb setting.  This may cause issues with rtlsdr capture sources.' >> "${kismet_site}"
+      fi
+    fi
     printf "\n## RTL-SDR type sources\n" >> "${kismet_site}"
     for i in $(seq 1 "${rtl_num_devices}"); do
       rtl_device=$((i-1))
@@ -603,6 +623,7 @@ handle_lar() {
         fi
         was_down="0"
         if ! ip link show "${vif_name}" | grep -q 'UP' > /dev/null 2>&1 ; then
+          # when this fails it doesn't exit???
           ip link set "${vif_name}" up >&2
           was_down="1"
         fi
