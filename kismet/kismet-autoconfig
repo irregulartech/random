@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.0.1'
+VERS='v2.0.2'
 
 blue_hydra="false"
 gentle="false"
