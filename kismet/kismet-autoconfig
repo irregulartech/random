@@ -176,6 +176,8 @@ if [ -n "${detect:-}" ]; then
   esac
 fi
 
+# XXX: check for rtleeprom, fatal if not optional, warning if optional
+
 if [ -n "${1:-}" ]; then
   if ! touch "${1}" || [ ! -w "${1}" ]; then
     printf 'FATAL: Unable to write to config %s\n' "${1}" >&2
@@ -561,7 +563,6 @@ detect_rtl() {
           4) freq="345" ;;
           5) freq="868.3" ;;
           6) freq="adsb" ;;
-          7) freq="amr" ;;
           *) freq="none" ;;
         esac
       else
@@ -572,7 +573,6 @@ detect_rtl() {
           3) freq="345" ;;
           4) freq="868.3" ;;
           5) freq="adsb" ;;
-          6) freq="amr" ;;
           *) freq="none" ;;
         esac
       fi
@@ -582,8 +582,6 @@ detect_rtl() {
         printf '# Wasting rtlsdr-%s\n' "${rtl_device}" >> "${kismet_site}"
       elif [ "${freq}" = "adsb" ]; then
         printf 'source=rtladsb-%s:name=rtladsb,type=rtladsb\n' "${rtl_device}" >> "${kismet_site}"
-      elif [ "${freq}" = "amr" ]; then
-        printf 'source=rtlamr-%s:name=rtlamr,type=rtlamr\n' "${rtl_device}" >> "${kismet_site}"
       else
         printf 'source=rtl433-%s:channel=%sMHz,name=rtl%s,type=rtl433\n' "${rtl_device}" "${freq}" "${freq}" >> "${kismet_site}"
       fi
