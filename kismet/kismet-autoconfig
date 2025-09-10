@@ -176,8 +176,6 @@ if [ -n "${detect:-}" ]; then
   esac
 fi
 
-# XXX: check for rtleeprom, fatal if not optional, warning if optional
-
 if [ -n "${1:-}" ]; then
   if ! touch "${1}" || [ ! -w "${1}" ]; then
     printf 'FATAL: Unable to write to config %s\n' "${1}" >&2
@@ -516,6 +514,16 @@ detect_rtl() {
       sleep 1
     fi
   fi
+  if [ ! -x "$(command -v rtl_eeprom 2>&1)" ]; then
+    printf 'ERROR: rtl_eeprom is required for detecting type=rtl433 devices, please install it\n' >&2
+    printf 'ERROR: this tool is typically available in the "rtl-sdr" package\n' >&2
+    if [ "${rtl433_optional}" = "false" ]; then
+      printf 'FATAL: rtl_433 device detection is currently not optional.  To operate without rtl_433 devices pass --rtl433-optional.\n' >&2
+      printf '# FATAL: rtl_433 device detection is currently not optional.  To operate without rtl_433 devices pass --rtl433-optional.\n' >> "${kismet_site}"
+      return 1
+    fi
+    return 0
+  fi
   rtl_num_devices=$(rtl_eeprom 2>&1 >/dev/null | grep "Found [0-9][0-9]*" | sed -E 's/.*([0-9]+).*/\1/')
   if [ -n "${rtl_num_devices}" ]; then
     if [ ! -x "$(command -v rtl_433 2>&1)" ]; then
@@ -523,9 +531,10 @@ detect_rtl() {
       printf 'ERROR: this tool is typically available in the "rtl_433" or "rtl-433" package\n' >&2
       if [ "${rtl433_optional}" = "false" ]; then
         printf 'FATAL: rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >&2
-        printf 'FATAL: rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >> "${kismet_site}"
+        printf '# FATAL: rtl_433 is currently not optional.  To operate without rtl_433 pass --rtl433-optional.\n' >> "${kismet_site}"
         return 1
       fi
+      return 0
     fi
     if [ "${rtl_num_devices}" -gt 2 ]; then
       if [ -r '/sys/module/usbcore/parameters/usbfs_memory_mb' ]; then
@@ -544,7 +553,7 @@ detect_rtl() {
         fi
       else
         printf 'WARN: unable to detect usbcore.usbfs_memory_mb setting, if you have problems with rtlsdr please adjust it yourself.\n' >&2
-        printf 'WARN: unable to detect usbcore.usbfs_memory_mb setting.  This may cause issues with rtlsdr capture sources.' >> "${kismet_site}"
+        printf '# WARN: unable to detect usbcore.usbfs_memory_mb setting.  This may cause issues with rtlsdr capture sources.' >> "${kismet_site}"
       fi
     fi
     printf "\n## RTL-SDR type sources\n" >> "${kismet_site}"
@@ -773,7 +782,7 @@ detect_gps() {
       printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
       if [ "${gpsd_optional}" = "false" ]; then
         printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
-        printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
+        printf '# FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
         return 1
       fi
     fi
@@ -783,7 +792,7 @@ detect_gps() {
     printf '# gps=gpsd:host=localhost,port=2947,reconnect=true\n' >> "${kismet_site}"
     if [ "${gpsd_optional}" = "false" ]; then
       printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >&2
-      printf 'FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
+      printf '# FATAL: GPSD is currently not optional.  To operate without gpsd pass --gpsd-optional.\n' >> "${kismet_site}"
       return 1
     fi
   fi
