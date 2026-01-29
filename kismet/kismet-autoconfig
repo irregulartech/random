@@ -695,7 +695,7 @@ detect_linuxwifi() {
   fi
   printf '\n## Wifi\n' >> "${kismet_site}"
   for wlan in ${wlan_devices}; do
-    if [ -n "${wifi_backhaul:-}" ]; then
+    if [ "${wifi_backhaul:-}" = "${wlan}" ]; then
       printf 'INFO: Ignoring device %s because it is being used as wifi backhaul\n' "${wlan}" >&2
       printf '# Ignoring device %s because it is being used as wifi backhaul\n' "${wlan}" >> "${kismet_site}"
       continue
