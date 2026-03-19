@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.1.0'
+VERS='v2.1.1'
 
 blue_hydra="false"
 gentle="false"
@@ -277,7 +277,7 @@ detect_nordic() {
 
   IFS='
 '
-  for device in $(${LSUSB_CMD} -d '1915:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort) $(${LSUSB_CMD} -d '239a:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort); do
+  for device in $(${LSUSB_CMD} -d '1915:' 2> /dev/null | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort) $(${LSUSB_CMD} -d '239a:' 2> /dev/null | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort); do
     VID="$(printf '%s' "${device}" | awk '{print $1}' | awk -F: '{print $1}')"
     PID="$(printf '%s' "${device}" | awk '{print $1}' | awk -F: '{print $2}')"
     BUS="$(printf '%s' "${device}" | awk '{print $2}')"
@@ -479,7 +479,7 @@ detect_ti() {
   ti16b3_first="1"
   IFS='
 '
-  for device in $(${LSUSB_CMD} -d '0451:' | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort); do
+  for device in $(${LSUSB_CMD} -d '0451:' 2> /dev/null | tr ":" " "| awk '{print $6":"$7,$2"-"$4}' | sort); do
     PID="$(printf '%s' "${device}" | awk '{print $1}' | awk -F: '{print $2}')"
     BUS="$(printf '%s' "${device}" | awk '{print $2}')"
     case "${PID}" in
@@ -668,7 +668,7 @@ detect_reg() {
 detect_linuxwifi() {
   # XXX: the coconut detection needs to remove things from the wlan detection, and it's a little dumb about it
   coconut_found='0'
-  if [ "${LSUSB}" = "1" ] && [ "$(${LSUSB_CMD} -d '148f:5370' | wc -l)" -gt 8 ]; then
+  if [ "${LSUSB}" = "1" ] && [ "$(${LSUSB_CMD} -d '148f:5370' 2> /dev/null | wc -l)" -gt 8 ]; then
     coconut_likely='1'
   else
     coconut_likely='0'
