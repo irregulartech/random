@@ -357,7 +357,7 @@ detect_nordic() {
 
 detect_linuxbluetooth() {
   if [ -x "$(command -v hciconfig)" ]; then
-    bthci="$(hciconfig -a | awk -F: '/hci/{print $1}')"
+    bthci="$(hciconfig -a 2> /dev/null | awk -F: '/hci/{print $1}')"
     if [ -n "${bthci}" ]; then
       printf '\n## bluetooth classic *active* discovery\n' >> "${kismet_site}"
       for hci in ${bthci}; do
@@ -644,6 +644,7 @@ handle_lar() {
             sleep 1
           else
             printf 'INFO iwlwifi LAR successfully set on %s\n' "${vif_name}" >&2
+            break
           fi
         done
         if [ "${was_down}" = "1" ]; then
