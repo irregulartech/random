@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.2.1'
+VERS='v2.2.2'
 
 blue_hydra="false"
 gentle="false"
@@ -613,40 +613,42 @@ handle_lar() {
     PHYDEV="$(cat "/sys/class/net/${1}/phy80211/name")"
     if [ -n "${PHYDEV:-}" ]; then
       was_down="0"
-      # All countries with wifi 6e seem to allow 5945-6425, so we pick a few channels and check if they are enabled.
-      # https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git/tree/db.txt
-      for channel in 5955 5975 5995 6015 6035 6055; do
-        if iw phy "${PHYDEV}" channels | grep -q "${channel} MHz .* \(disabled\)" > /dev/null 2>&1 ; then
-          unset vif_name
-          for vif in /sys/class/ieee80211/"${PHYDEV}"/device/net/*; do
-            # Checking for managed/client mode
-            if [ "$(cat "${vif}/type")" = "1" ]; then
-              vif_name="${vif##*/}"
-              break
-            fi
-          done
-          if [ -z "${vif_name:-}" ]; then
-            printf 'FATAL: Your iwlwifi device %s needs LAR set, but no managed interface is available to do that.\n' "${1}" >&2
-            printf 'FATAL: Please run "airmon-ng stop %s" or create a managed interface manually.\n' "${1}" >&2
-            exit 1
+      if iw phy "${PHYDEV}" channels | grep -q "5955 MHz .* \(disabled\)" > /dev/null 2>&1 ; then
+        unset vif_name
+        for vif in /sys/class/ieee80211/"${PHYDEV}"/device/net/*; do
+          # Checking for managed/client mode
+          if [ "$(cat "${vif}/type")" = "1" ]; then
+            vif_name="${vif##*/}"
+            break
           fi
-          if ! ip link show "${vif_name}" | grep -q 'UP' > /dev/null 2>&1 ; then
-            # when this fails it doesn't exit???
-            ip link set "${vif_name}" up >&2
-            was_down="1"
-          fi
-          if iw "${vif_name}" scan > /dev/null 2>&1; then
-            printf 'INFO: scan triggered for iwlwifi LAR on %s\n' "${vif_name}" >&2
-          else
-            printf 'ERROR: scan failed for iwlwifi LAR failed to set for %s\n' "${vif_name}" >&2
-          fi
-          sleep 1
-        else
-          printf 'INFO iwlwifi LAR successfully set on %s\n' "${vif_name}" >&2
+        done
+        if [ -z "${vif_name:-}" ]; then
+          printf 'FATAL: Your iwlwifi device %s needs LAR set, but no managed interface is available to do that.\n' "${1}" >&2
+          printf 'FATAL: Please run "airmon-ng stop %s" or create a managed interface manually.\n' "${1}" >&2
+          exit 1
         fi
-      done
-      if [ "${was_down}" = "1" ]; then
-        ip link set "${vif_name}" down >&2
+        if ! ip link show "${vif_name}" | grep -q 'UP' > /dev/null 2>&1 ; then
+          # when this fails it doesn't exit???
+          ip link set "${vif_name}" up >&2
+          was_down="1"
+        fi
+        # All countries with wifi 6e seem to allow 5945-6425, so we pick a few channels and check if they are enabled.
+        # https://git.kernel.org/pub/scm/linux/kernel/git/wens/wireless-regdb.git/tree/db.txt
+        for channel in 5955 5975 5995 6015 6035 6055; do
+          if iw phy "${PHYDEV}" channels | grep -q "${channel} MHz .* \(disabled\)" > /dev/null 2>&1 ; then
+            if iw "${vif_name}" scan > /dev/null 2>&1; then
+              printf 'INFO: scan triggered for iwlwifi LAR on %s\n' "${vif_name}" >&2
+            else
+              printf 'ERROR: scan failed for iwlwifi LAR failed to set for %s\n' "${vif_name}" >&2
+            fi
+            sleep 1
+          else
+            printf 'INFO iwlwifi LAR successfully set on %s\n' "${vif_name}" >&2
+          fi
+        done
+        if [ "${was_down}" = "1" ]; then
+          ip link set "${vif_name}" down >&2
+        fi
       fi
     fi
   fi
