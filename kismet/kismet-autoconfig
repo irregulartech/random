@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.2.3'
+VERS='v2.2.4'
 
 blue_hydra="false"
 gentle="false"
@@ -660,6 +660,7 @@ handle_lar() {
 }
 
 detect_reg() {
+  # Remember this must be run after handle_lar in detect_linuxwifi so the reg domain for intel is set correctly
   if iw reg get | grep -q 'country 00:'; then
     printf '\nWARN: Regulatory Domain appears to be unset, please consider setting it with "iw reg set XX"\n' >&2
     printf 'WARN: https://wireless.wiki.kernel.org/en/users/documentation/iw#updating_your_regulatory_domain\n' >&2
@@ -837,8 +838,8 @@ kick_it() {
   detect_ubertooth || errors_found="1"
   detect_ti || errors_found="1"
   detect_rtl || errors_found="1"
-  detect_reg || errors_found="1"
   detect_linuxwifi || errors_found="1"
+  detect_reg || errors_found="1"
   detect_gps || errors_found="1"
   add_log_details || errors_found="1"
   add_user_config || errors_found="1"
