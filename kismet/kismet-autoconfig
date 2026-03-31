@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.2.4'
+VERS='v2.2.5'
 
 blue_hydra="false"
 gentle="false"
@@ -506,6 +506,10 @@ detect_ti() {
   return 0
 }
 
+random_uuid() {
+  printf ',uuid=%s' "$(uuidgen)"
+}
+
 detect_rtl() {
   usb_check || return 0
   #make sure we kill any left over rtl_433
@@ -557,8 +561,10 @@ detect_rtl() {
         printf '# WARN: unable to detect usbcore.usbfs_memory_mb setting.  This may cause issues with rtlsdr capture sources.' >> "${kismet_site}"
       fi
     fi
+    unique_rtl_serials=''
     printf "\n## RTL-SDR type sources\n" >> "${kismet_site}"
     for i in $(seq 1 "${rtl_num_devices}"); do
+      append_uuid=''
       rtl_device=$((i-1))
       if [ "${rtl_skip_zero}" = "true" ]; then
         case ${rtl_device} in
@@ -590,10 +596,33 @@ detect_rtl() {
       if [ "${freq}" = "none" ]; then
         printf 'INFO: You have more rtlsdrs than we know what to do with.\n' >&2
         printf '# Wasting rtlsdr-%s\n' "${rtl_device}" >> "${kismet_site}"
-      elif [ "${freq}" = "adsb" ]; then
-        printf 'source=rtladsb-%s:name=rtladsb,type=rtladsb\n' "${rtl_device}" >> "${kismet_site}"
+        continue
+      fi
+      # For just the sdrs we are using, check if kismet will make a unique uuid
+      # If not, make a random one so it's unique
+      rtl_serial="$(rtl_eeprom -d ${rtl_device} 2>&1 | awk -F'Serial number:' '/Serial number:/{sub(/^[ \t]+/, "", $2); print $2}')"
+      if [ -n "${rtl_serial:-}" ]; then
+        #printf 'Found serial: %s\n' "${rtl_serial}"
+        case "${unique_rtl_serials:-}" in
+          *"${rtl_serial}"*)
+            #printf 'Non-unique serial %s already in list: %s\n' "${rtl_serial}" "${unique_rtl_serials:-}"
+            # non-unique serial?  make a random uuid
+            append_uuid="$(random_uuid)"
+            ;;
+          *)
+            # if it has a unique serial add it to the list and let kismet make a deterministic uuid
+            #printf 'Adding unique serial %s to list: %s\n' "${rtl_serial}" "${unique_rtl_serials:-}"
+            unique_rtl_serials="${unique_rtl_serials:-} ${rtl_serial}"
+        esac
       else
-        printf 'source=rtl433-%s:channel=%sMHz,name=rtl%s,type=rtl433\n' "${rtl_device}" "${freq}" "${freq}" >> "${kismet_site}"
+        printf 'No serial detected\n'
+        # no serial?  make a random uuid
+        append_uuid="$(random_uuid)"
+      fi
+      if [ "${freq}" = "adsb" ]; then
+        printf 'source=rtladsb-%s:name=rtladsb,type=rtladsb%s\n' "${rtl_device}" "${append_uuid:-}" >> "${kismet_site}"
+      else
+        printf 'source=rtl433-%s:channel=%sMHz,name=rtl%s,type=rtl433%s\n' "${rtl_device}" "${freq}" "${freq}" "${append_uuid:-}" >> "${kismet_site}"
       fi
     done
   fi
