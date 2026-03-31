@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.2.5'
+VERS='v2.2.6'
 
 blue_hydra="false"
 gentle="false"
@@ -603,8 +603,8 @@ detect_rtl() {
       rtl_serial="$(rtl_eeprom -d ${rtl_device} 2>&1 | awk -F'Serial number:' '/Serial number:/{sub(/^[ \t]+/, "", $2); print $2}')"
       if [ -n "${rtl_serial:-}" ]; then
         #printf 'Found serial: %s\n' "${rtl_serial}"
-        case "${unique_rtl_serials:-}" in
-          *"${rtl_serial}"*)
+        case ",${unique_rtl_serials:-}," in
+          *",${rtl_serial},"*)
             #printf 'Non-unique serial %s already in list: %s\n' "${rtl_serial}" "${unique_rtl_serials:-}"
             # non-unique serial?  make a random uuid
             append_uuid="$(random_uuid)"
@@ -612,10 +612,10 @@ detect_rtl() {
           *)
             # if it has a unique serial add it to the list and let kismet make a deterministic uuid
             #printf 'Adding unique serial %s to list: %s\n' "${rtl_serial}" "${unique_rtl_serials:-}"
-            unique_rtl_serials="${unique_rtl_serials:-} ${rtl_serial}"
+            unique_rtl_serials="${unique_rtl_serials:-},${rtl_serial}"
         esac
       else
-        printf 'No serial detected\n'
+        #printf 'No serial detected\n'
         # no serial?  make a random uuid
         append_uuid="$(random_uuid)"
       fi
