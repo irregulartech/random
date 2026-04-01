@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.2.7'
+VERS='v2.3.0'
 
 blue_hydra="false"
 gentle="false"
@@ -529,7 +529,7 @@ detect_rtl() {
     fi
     return 0
   fi
-  rtl_num_devices=$(rtl_eeprom 2>&1 >/dev/null | awk '/Found [0-9]*/ {print $2}')
+  rtl_num_devices=$(rtl_eeprom 2>&1 >/dev/null | awk '/Found [[:digit:]]+/ {print $2}')
   if [ -n "${rtl_num_devices}" ]; then
     if [ ! -x "$(command -v rtl_433 2>&1)" ]; then
       printf 'ERROR: rtl_433 is required for type=rtl433 devices, please install it\n' >&2
