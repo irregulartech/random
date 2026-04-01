@@ -30,6 +30,11 @@ if [ ! -x "$(command -v jq 2>&1)" ]; then
   printf 'FATAL: this tool is typically available in the "jq" package\n' >&2
   exit 1
 fi
+if [ ! -x "$(command -v uuidgen 2>&1)" ]; then
+  printf 'FATAL: uuidgen is required, please install it\n' >&2
+  printf 'FATAL: this tool is typically available in the "coreutils" or "uuidgen" package\n' >&2
+  exit 1
+fi
 # On busybox/ash this returns "pgrep" because it's a built-in
 # so for this check we rely on command -v exit code and don't test -x
 if ! command -v pgrep > /dev/null 2>&1; then
