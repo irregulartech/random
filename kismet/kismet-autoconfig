@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.3.0'
+VERS='v2.3.1'
 
 blue_hydra="false"
 gentle="false"
@@ -887,7 +887,7 @@ if [ -n "${detect:-}" ]; then
   if detect_"${detect}"; then
     exit 0
   else
-    printf 'FATAL: %s found fatal errors, please review the output carefully.\n' "${0}"
+    printf 'FATAL: %s found fatal errors, please review the output carefully.\n' "${0}" 2>&1
     exit 1
   fi
 else
@@ -895,7 +895,7 @@ else
   if kick_it; then
     exit 0
   else
-    printf 'FATAL: %s found fatal errors, please review the output carefully.\n' "${0}"
+    printf 'FATAL: %s found fatal errors, please review the output carefully.\n' "${0}" 2>&1
     exit 1
   fi
 fi
