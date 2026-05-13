@@ -2,7 +2,7 @@
 set -e
 set -u
 
-VERS='v2.3.1'
+VERS='v2.3.2'
 
 blue_hydra="false"
 gentle="false"
@@ -258,8 +258,13 @@ detect_nxp() {
       printf '\n## NXP_KW1Z ble and zigbee sniffer\n' >> "${kismet_site}"
       nxpkw1z_first="0"
     fi
-    printf 'source=nxp_kw41z:device=%s,type=nxp_kw41z,phy=all\n' "${nxp}" >> "${kismet_site}"
-    : $(( nxp_serial += 1 ))
+    if [ -c "${nxp}" ]; then
+      printf 'source=nxp_kw41z:device=%s,type=nxp_kw41z,phy=all\n' "${nxp}" >> "${kismet_site}"
+      : $(( nxp_serial += 1 ))
+    else
+      printf 'FATAL: The kernel is aware of an nxp_kw41z at %s but we cannot access it!\n' "${nxp}" >&2
+      printf '# FATAL: The kernel is aware of an nxp_kw41z at %s but we cannot access it!\n' "${nxp}" >> "${kismet_site}"
+    fi
   done
   if [ "${nxp_usb}" != "${nxp_serial}" ]; then
     printf 'ERROR: Detected %s nxp_kw1z but found serial interfaces for %s.\n' "${nxp_usb}" "${nxp_serial}" >&2
@@ -329,8 +334,13 @@ detect_nordic() {
       printf '\n## nrf51822 ble sniffer\n' >> "${kismet_site}"
       nrf51822_first="0"
     fi
-    printf 'source=nrf51822:device=%s,type=nrf51822\n' "${nrf51822}" >> "${kismet_site}"
-    nrf522a_serial=$(( nrf522a_serial + 1 ))
+    if [ -c "${nrf51822}" ]; then
+      printf 'source=nrf51822:device=%s,type=nrf51822\n' "${nrf51822}" >> "${kismet_site}"
+      nrf522a_serial=$(( nrf522a_serial + 1 ))
+    else
+      printf 'FATAL: The kernel is aware of an nrf51822 at %s but we cannot access it!\n' "${nrf51822}" >&2
+      printf '# FATAL: The kernel is aware of an nrf51822 at %s but we cannot access it!\n' "${nrf51822}" >> "${kismet_site}"
+    fi
   done
   if [ "${nrf522a_usb}" != "${nrf522a_serial}" ]; then
     printf 'ERROR: Detected %s nrf51822 but found serial interfaces for %s.\n' "${nrf522a_usb}" "${nrf522a_serial}"
@@ -346,8 +356,13 @@ detect_nordic() {
       printf '\n## nrf52840 802.15.4 sniffer\n' >> "${kismet_site}"
       nrf52840_first="0"
     fi
-    printf 'source=nrf52840:device=%s,type=nrf52840\n' "${nrf52840}" >> "${kismet_site}"
-    nrf154a_serial=$(( nrf154a_serial + 1 ))
+    if [ -c "${nrf52840}" ]; then
+      printf 'source=nrf52840:device=%s,type=nrf52840\n' "${nrf52840}" >> "${kismet_site}"
+      nrf154a_serial=$(( nrf154a_serial + 1 ))
+    else
+      printf 'FATAL: The kernel is aware of an nrf52840 at %s but we cannot access it!\n' "${nrf52840}" >&2
+      printf '# FATAL: The kernel is aware of an nrf52840 at %s but we cannot access it!\n' "${nrf52840}" >> "${kismet_site}"
+    fi
   done
   if [ "${nrf154a_usb}" != "${nrf154a_serial}" ]; then
     printf 'Detected %s nrf52840 but found serial interfaces for %s.\n' "${nrf154a_usb}" "${nrf154a_serial}"
@@ -554,10 +569,12 @@ detect_rtl() {
               printf 'INFO: automatically updated usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >&2
             else
               printf 'FATAL: failed to update usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >&2
+              printf '# FATAL: failed to update usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >> "${kismet_site}"
               return 1
             fi
           else
             printf 'FATAL: no permission to update usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >&2
+            printf '# FATAL: no permission to update usbcore.usbfs_memory_mb to handle your %s rtlsdrs.\n' "${rtl_num_devices}" >> "${kismet_site}"
             return 1
           fi
         fi
